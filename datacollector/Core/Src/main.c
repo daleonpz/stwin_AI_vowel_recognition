@@ -75,7 +75,7 @@ static void InitPredictiveMaintenance(void);
 
 static void SendMotionData(void);
 
-static void Inertial_Timer(void);
+static void Enable_Inertial_Timer(void);
 
 /**
  * @brief  Main program
@@ -138,7 +138,7 @@ int main(void)
     /* Predictive Maintenance Initialization */
     InitPredictiveMaintenance();
 
-    Inertial_Timer();   
+    Enable_Inertial_Timer();   
 
 
     uint32_t num_samples_1_sek = 1; //FREQ_ACC_GYRO_MAG;
@@ -447,7 +447,7 @@ void SystemClock_Config(void)
  * * @param  None
  * @retval None
  */
-static void Inertial_Timer(void)
+static void Enable_Inertial_Timer(void)
 { 
     /* Start the TIM Base generation in interrupt mode (for Acc/Gyro/Mag sensor) */
     if(HAL_TIM_OC_Start_IT(&TimCCHandle, TIM_CHANNEL_3) != HAL_OK){

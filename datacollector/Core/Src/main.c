@@ -45,8 +45,6 @@ uint32_t ConnectionBleStatus  =0;
 
 TIM_HandleTypeDef    TimCCHandle;
 
-uint8_t InertialTimerEnabled= 0;
-
 uint32_t uhCCR1_Val = DEFAULT_uhCCR1_Val;
 uint32_t uhCCR2_Val = DEFAULT_uhCCR2_Val;
 uint32_t uhCCR3_Val = DEFAULT_uhCCR3_Val;
@@ -77,7 +75,7 @@ static void InitPredictiveMaintenance(void);
 
 static void SendMotionData(void);
 
-static void Inertial_StartStopTimer(void);
+static void Inertial_Timer(void);
 
 /**
  * @brief  Main program
@@ -140,8 +138,7 @@ int main(void)
     /* Predictive Maintenance Initialization */
     InitPredictiveMaintenance();
 
-//     Environmental_StartStopTimer();
-    Inertial_StartStopTimer();   
+    Inertial_Timer();   
 
 
     uint32_t num_samples_1_sek = 1; //FREQ_ACC_GYRO_MAG;
@@ -446,28 +443,23 @@ void SystemClock_Config(void)
 /* Hardware Characteristics Notify Service */
 /*******************************************/
 /**
- * @brief  This function is called when there is a change on the gatt attribute for inertial
- *         for Start/Stop Timer
- * @param  None
+ * @brief  Enable timer to generate periodic event 
+ * * @param  None
  * @retval None
  */
-static void Inertial_StartStopTimer(void)
+static void Inertial_Timer(void)
 { 
-    if( !InertialTimerEnabled ){
     /* Start the TIM Base generation in interrupt mode (for Acc/Gyro/Mag sensor) */
-        if(HAL_TIM_OC_Start_IT(&TimCCHandle, TIM_CHANNEL_3) != HAL_OK){
-            /* Starting Error */
-            Error_Handler();
-        }
+    if(HAL_TIM_OC_Start_IT(&TimCCHandle, TIM_CHANNEL_3) != HAL_OK){
+        /* Starting Error */
+        Error_Handler();
+    }
 
-        /* Set the new Capture compare value */
-        {
-            uint32_t uhCapture = __HAL_TIM_GET_COUNTER(&TimCCHandle);
-            /* Set the Capture Compare Register value (for Acc/Gyro/Mag sensor) */
-            __HAL_TIM_SET_COMPARE(&TimCCHandle, TIM_CHANNEL_3, (uhCapture + uhCCR3_Val));
-        }
-
-        InertialTimerEnabled= 1;
+    /* Set the new Capture compare value */
+    {
+        uint32_t uhCapture = __HAL_TIM_GET_COUNTER(&TimCCHandle);
+        /* Set the Capture Compare Register value (for Acc/Gyro/Mag sensor) */
+        __HAL_TIM_SET_COMPARE(&TimCCHandle, TIM_CHANNEL_3, (uhCapture + uhCCR3_Val));
     }
 
 }

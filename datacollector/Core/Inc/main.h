@@ -94,7 +94,6 @@ extern TIM_HandleTypeDef TimCCHandle;
 
 extern uint8_t EnvironmentalTimerEnabled;
 extern uint8_t AudioLevelTimerEnabled;
-extern uint8_t InertialTimerEnabled;
 extern uint8_t BatteryTimerEnabled;
 
 extern uint8_t AudioLevelEnable;

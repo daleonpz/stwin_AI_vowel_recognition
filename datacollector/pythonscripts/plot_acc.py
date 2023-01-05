@@ -89,13 +89,13 @@ class serialPlot:
         value = self.rawData
 
         # we get the latest data point and append it to our array
-        self.acc_x.append( value[0])
-        self.acc_y.append( value[1])
-        self.acc_z.append( value[2])
+        self.acc_x.append(value[0])
+        self.acc_y.append(value[1])
+        self.acc_z.append(value[2])
 
-        self.gyro_x.append( value[3])
-        self.gyro_y.append( value[4])
-        self.gyro_z.append( value[5])
+        self.gyro_x.append(value[3])
+        self.gyro_y.append(value[4])
+        self.gyro_z.append(value[5])
 
         lines_x_acc.set_data(range(self.plotMaxLength), self.acc_x)
         lines_y_acc.set_data(range(self.plotMaxLength), self.acc_y)
@@ -134,9 +134,7 @@ def main():
     baudRate = 115200
     maxPlotLength = 250
     dataNumBytes = 1  # number of bytes of 1 data point
-    s = serialPlot(
-        portName, baudRate, maxPlotLength, dataNumBytes
-    )  
+    s = serialPlot(portName, baudRate, maxPlotLength, dataNumBytes)
     s.readSerialStart()  # starts background thread
 
     # plotting starts below

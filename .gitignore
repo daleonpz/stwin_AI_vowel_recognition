@@ -1,0 +1,8 @@
+*.swp
+cscope.*
+tags
+*.d
+*.obj
+*.su
+build/
+*/pythonscripts/data/

@@ -189,7 +189,7 @@ static void SendMotionData(void)
     MAG_Value.x = MAG_Value.y = MAG_Value.z =0;
 
     TargetBoardFeatures.AccSensorIsInit = 1;
-    TargetBoardFeatures.GyroSensorIsInit= 0;
+    TargetBoardFeatures.GyroSensorIsInit= 1;
     TargetBoardFeatures.MagSensorIsInit = 0;
 
 //     _PRINTF("[");
@@ -205,7 +205,7 @@ static void SendMotionData(void)
     if(TargetBoardFeatures.GyroSensorIsInit)
     {
         MOTION_SENSOR_GetAxes(GYRO_INSTANCE,MOTION_GYRO, &GYR_Value);
-        _PRINTF("%ld, %ld, %ld ", GYR_Value.x, GYR_Value.y, GYR_Value.z);;
+        _PRINTF(", %ld, %ld, %ld ", GYR_Value.x, GYR_Value.y, GYR_Value.z);;
 //         PREDMNT1_PRINTF("Sending GYR: %d %d %d \r\n", GYR_Value.x/100, GYR_Value.y/100, GYR_Value.z/100); // from BLE_AccGyroMagUpdate
     }
 

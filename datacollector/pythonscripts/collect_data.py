@@ -1,10 +1,9 @@
-#!/usr/bin/env python
-
 import serial
 import re
 import time
 import sys, getopt
 import csv
+
 
 class serialCollector:
     def __init__(self, 
@@ -26,7 +25,8 @@ class serialCollector:
             sys.exit(1)
 
     def readSerialStart(self):
-    
+   
+        print('Try letter O')
         data = []
         while (len(data) != 3 ):
             raw_data = self.serialConnection.readline().decode('utf-8')
@@ -34,6 +34,9 @@ class serialCollector:
             print("waiting for a good reading...")
         
         with open(self.csv_filename, 'w', newline='') as file:
+            print('be prepare in 0.5 sec')
+            time.sleep(0.5)
+            print('start now')
             writer = csv.writer(file)
             for x in range(0, self.sampling_time_sec  * self.sample_freq ):
                 raw_data = self.serialConnection.readline().decode('utf-8')

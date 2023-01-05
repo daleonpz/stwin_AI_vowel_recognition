@@ -66,7 +66,7 @@ static volatile uint32_t SendAccGyroMag=        0;
 static volatile uint32_t t_stwin=               0;
 
 static volatile uint8_t  g_led_on           = 0;
-
+static volatile uint8_t  g_acc_counter      = 0;
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 
@@ -140,45 +140,30 @@ int main(void)
 
     Enable_Inertial_Timer();   
 
-
-    uint32_t num_samples_1_sek = 1; //FREQ_ACC_GYRO_MAG;
-    uint32_t samples_count = 0;
     /* Infinite loop */
+    uint32_t num_samples_per_seconds = FREQ_ACC_GYRO_MAG / 100 ; // 100 samples per second
     while (1)
     {
 
-        if ( samples_count == 0 ) {
-//             _PRINTF("[");
-            LedOnTargetPlatform();
-            samples_count++;
+        if (num_samples_per_seconds == g_acc_counter){
+            g_led_on ^= 1;
+            SendAccGyroMag = 1;
         }
-        else if ( samples_count > num_samples_1_sek)
-        {
-//             _PRINTF("]\r\n");
-            _PRINTF("\r\n");
-            LedOffTargetPlatform();
-//             HAL_Delay(1000); // 2sek
-            samples_count = 0;
-        }
-        else {
-//         if ( !g_led_on ) {
-//            LedOnTargetPlatform();
-//         }
-//         else{
-//             LedOffTargetPlatform();
-//         }
- 
-//         /* Motion Data */
+
         if(SendAccGyroMag) {
-            SendAccGyroMag=0;
             SendMotionData();
-            samples_count++;
-
+            _PRINTF("\r\n");
+            SendAccGyroMag  =   0;
+            g_acc_counter   =   0;
         }
 
-        /* Wait for Event */
-//         __WFI();
+        if ( !g_led_on ) {
+           LedOnTargetPlatform();
         }
+        else{
+            LedOffTargetPlatform();
+        }
+
     }
 }
 
@@ -288,7 +273,7 @@ static void InitTimers(void)
     }
 
     /* Output Compare Toggle Mode configuration: Channel3 for Acc/Gyro/Mag sensor */
-    sConfig.Pulse = DEFAULT_uhCCR3_Val;
+    sConfig.Pulse = DEFAULT_uhCCR3_Val; // 50ms
     if(HAL_TIM_OC_ConfigChannel(&TimCCHandle, &sConfig, TIM_CHANNEL_3) != HAL_OK)
     {
         /* Configuration Error */
@@ -475,7 +460,6 @@ static void Enable_Inertial_Timer(void)
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
 {
 
-    g_led_on ^= 1; 
     /* TIM1_CH3 toggling with frequency = 20 Hz */
     if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3)
     {
@@ -483,7 +467,7 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
         uhCapture = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3);
         /* Set the Capture Compare Register value (for Acc/Gyro/Mag sensor) */
         __HAL_TIM_SET_COMPARE(&TimCCHandle, TIM_CHANNEL_3, (uhCapture + uhCCR3_Val));
-        SendAccGyroMag=1;
+        g_acc_counter++;
     }
 
 }

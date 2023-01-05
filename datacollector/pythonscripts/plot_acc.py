@@ -114,7 +114,9 @@ def main():
     lines_y = ax.plot([], [], label="Y")[0]
     lines_z = ax.plot([], [], label="Z")[0]
     lineValueText = ax.text(0.50, 0.90, '', transform=ax.transAxes)
-    anim = animation.FuncAnimation(fig, s.getSerialData, fargs=(ax, lines_x, lines_y, lines_z, lineValueText, timeText), interval=pltInterval, blit= False)    # fargs has to be a tuple
+    anim = animation.FuncAnimation(fig, s.getSerialData, 
+                                   fargs=(ax, lines_x, lines_y, lines_z, lineValueText, timeText), 
+                                   interval=pltInterval, blit= False)    # fargs has to be a tuple
 
     plt.legend(loc="upper left")
     plt.show()

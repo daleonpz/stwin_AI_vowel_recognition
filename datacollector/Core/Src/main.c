@@ -141,7 +141,8 @@ int main(void)
     Enable_Inertial_Timer();   
 
     /* Infinite loop */
-    uint32_t num_samples_per_seconds = FREQ_ACC_GYRO_MAG / 100 ; // 100 samples per second
+    uint32_t num_samples_per_seconds = FREQ_ACC_GYRO_MAG / 200; // 200 samples per second 
+                                                                // that's the maximum frequency
     while (1)
     {
 

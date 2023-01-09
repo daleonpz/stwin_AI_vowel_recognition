@@ -44,13 +44,8 @@ class serialCollector:
         self.csv_filename = csv_filename
         self.label = label
 
-        print('serialCollector:  \
-                serialPort = {}, \
-                serialBaud = {}, \
-              sample_freq = {}, \
-              sampling_time_sec = {}, \
-              csv_filename = {}, \
-              label = {}'.format(serialPort, serialBaud, sample_freq, sampling_time_sec, csv_filename, label))
+        print('serialCollector:  serialPort = {}, serialBaud = {}, sample_freq = {}, sampling_time_sec = {},  csv_filename = {}, \
+                label = {}'.format(serialPort, serialBaud, sample_freq, sampling_time_sec, csv_filename, label))
 
         print('Trying to connect to: ' + str(serialPort) + ' at ' + str(serialBaud) + ' BAUD.')
         try:
@@ -70,13 +65,20 @@ class serialCollector:
         
         with open(self.csv_filename, 'w', newline='') as file:
             print(f'label: {self.label}')
-            print('be prepare in 0.5 sec')
-            time.sleep(0.5)
+            print('be prepare in 1 sec')
+            time.sleep(1)
             print('start now')
             writer = csv.writer(file)
             for x in tqdm(range(0, self.sampling_time_sec  * self.sample_freq )):
-                raw_data = self.serialConnection.readline().decode('utf-8')
-                data = [float(s) for s in re.findall(r'-?\d+\.?\d*', raw_data)]
+                for attempt in range(0, 10):
+                    raw_data = self.serialConnection.readline().decode('utf-8')
+                    data = [float(s) for s in re.findall(r'-?\d+\.?\d*', raw_data)]
+                    if (len(data) != 6):
+                        print("data error, new try...")
+                        continue
+                    else:
+                        break
+
                 writer.writerow(data)
 
     def close(self):
@@ -132,6 +134,10 @@ def main(argv):
         gyro = data[:, 3:6]
 
         print(len(acc))
+        if len(acc) <  sample_freq * sampling_time_sec:
+            print("not enough data")
+            return
+
         nacc = normalize_columns_between_0_and_1(acc)
         ngyro = normalize_columns_between_0_and_1(gyro)
 

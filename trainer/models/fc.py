@@ -13,16 +13,18 @@ class FC(nn.Module):
         super(FC, self).__init__()
         assert len(hidden_size) >= 1 # at least one hidden layer
         layers = nn.ModuleList()
-        layer_sizes = [num_features] + hidden_size + [num_classes]
+        layer_sizes = [num_features] + hidden_size
 
         for dim_in, dim_out in zip(layer_sizes[:-1], layer_sizes[1:]):
             layers.append(nn.Linear(dim_in, dim_out, bias=True))
             layers.append(nn.ReLU())
-
-        layers.pop() # remove last ReLU, because we don't want it after the last layer 
-                     # the last layer is the output layer, so we don't want to apply ReLU to it
-
+            if dropout > 0:
+                layers.append(nn.Dropout(p=dropout))
+        
         self.layers = nn.Sequential(*layers)
+
+        # the last layer is the output layer, so we don't want to apply ReLU to it
+        layers.append(nn.Linear(layer_sizes[-1], num_classes, bias=True))
 
         logger.debug("FC model with %d features, %d classes, %d hidden layers, %d hidden units per layer" % (num_features, num_classes, len(hidden_size), hidden_size[0]))
         logger.debug("FC model: %s" % self)

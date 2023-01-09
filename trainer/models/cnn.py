@@ -29,9 +29,14 @@ class CNN(nn.Module):
         logger.debug("CNN model: %s" % self)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.bn1(self.conv1(x))))
-        x = self.pool(F.relu(self.bn2(self.conv2(x))))
-        x = x.view(x.shape[0], -1) # flatten the input
+#         x = self.pool(F.relu(self.bn1(self.conv1(x))))
+#         x = self.pool(F.relu(self.bn2(self.conv2(x))))
+        x = F.relu(self.bn1(self.conv1(x)))
+        logger.debug("CNN model: conv1 output shape: %s" % str(x.shape))
+        x = F.relu(self.bn2(self.conv2(x)))
+        logger.debug("CNN model: conv2 output shape: %s" % str(x.shape))
+        x = self.pool(x)
+        logger.debug("CNN model: pool output shape: %s" % str(x.shape))
         x = self.fc(x)
 
         return x

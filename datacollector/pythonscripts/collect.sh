@@ -28,7 +28,10 @@ labels=( "A" "E" "I" "O" "U" )
 
 for label in "${labels[@]}"; do
     echo "####################################################"
-    echo "Collecting data for label: $label"
+    echo "Alert!!! Data collection for label: $label"
+    echo "Press enter to start recording"
+    read -r
+
     # create a directory for each label
     folder_name="vowel_${label}"
     mkdir -p "${folder_name}"
@@ -40,6 +43,11 @@ for label in "${labels[@]}"; do
     done
     # move all files with the label to the directory
     mv "$label"* "${folder_name}"
+
+    ## two blank lines between each label
+    echo ""
+    echo ""
+    echo "Collecting data for label: $label done"
 done
 
 echo "All done"

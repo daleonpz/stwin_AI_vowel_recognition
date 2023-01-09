@@ -20,11 +20,11 @@ class FC(nn.Module):
             layers.append(nn.ReLU())
             if dropout > 0:
                 layers.append(nn.Dropout(p=dropout))
-        
-        self.layers = nn.Sequential(*layers)
 
         # the last layer is the output layer, so we don't want to apply ReLU to it
         layers.append(nn.Linear(layer_sizes[-1], num_classes, bias=True))
+
+        self.layers = nn.Sequential(*layers)
 
         logger.debug("FC model with %d features, %d classes, %d hidden layers, %d hidden units per layer" % (num_features, num_classes, len(hidden_size), hidden_size[0]))
         logger.debug("FC model: %s" % self)

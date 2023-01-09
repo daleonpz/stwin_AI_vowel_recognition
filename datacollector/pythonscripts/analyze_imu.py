@@ -56,15 +56,22 @@ def plot_two_vectors_side_by_side(vector1, vector2, title1, title2):
 
 # plot data in 2x3 subplots
 def plot_data(mdata, lindata):
-    fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3)
+    fig, ((ax1, ax2, ax3, ax4), (ax5, ax6, ax7, ax8)) = plt.subplots(2, 4)
     ax1.imshow(mdata[:, :, 0])
     ax2.imshow(mdata[:, :, 1])
     ax3.imshow(mdata[:, :, 2])
-    ax4.plot(lindata[:, 0])
-    ax5.plot(lindata[:, 1])
-    ax6.plot(lindata[:, 2])
-    plt.show(block=False)
+    ax4.imshow(mdata)
 
+    ax5.plot(lindata[:, 0])
+    ax6.plot(lindata[:, 1])
+    ax7.plot(lindata[:, 2])
+
+    # show plot fullscreen
+    mng = plt.get_current_fig_manager()
+    mng.full_screen_toggle()
+#     mng.resize(*mng.window.maxsize())
+
+    plt.show(block=False)
 
 # get moving average of a vector
 def get_moving_average(vector, window_size):
@@ -213,7 +220,7 @@ if __name__ == "__main__":
     n_samples = int(sampling_time * sample_freq)
 
     position = np.zeros((n_samples, 3))
-    sleep_time = 2
+    sleep_time = 5
 
     time.sleep(sleep_time)  # to get enough data
     n_samples = 196  # 196 number of samples in 1 second
@@ -239,5 +246,5 @@ if __name__ == "__main__":
 
         ngyro = ngyro.reshape(img_size, img_size, 3)
         plot_data(nacc, acc)
-        plt.pause(2)
+        plt.pause(sleep_time)
         plt.close("all")

@@ -28,7 +28,7 @@ class serialCollector:
    
         print('Try letter O')
         data = []
-        while (len(data) != 3 ):
+        while (len(data) != 6 ):
             raw_data = self.serialConnection.readline().decode('utf-8')
             data = [float(s) for s in re.findall(r'-?\d+\.?\d*', raw_data)]
             print("waiting for a good reading...")

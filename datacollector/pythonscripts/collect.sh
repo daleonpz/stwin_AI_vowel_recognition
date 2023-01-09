@@ -33,7 +33,6 @@ for label in "${labels[@]}"; do
     folder_name="vowel_${label}"
     mkdir -p "${folder_name}"
 
-    number_of_samples=2
     for ((i=0; i < number_of_samples; i++)); do
         # collect data for each label
         filenumber=$(printf "%04d" "$i")

@@ -19,7 +19,9 @@ def main(argv):
     files = os.listdir(path)
     
     img_size = 20
-    number_of_files = 2
+    number_of_files = 1
+    if len(sys.argv) > 2:
+        number_of_files = int(sys.argv[2])
     # select 15 files randomly
     files = np.random.choice(files, number_of_files, replace=False)
 
@@ -27,6 +29,11 @@ def main(argv):
     fig, axes = plt.subplots(number_of_files, 4)
 
     fig.suptitle(f'{path}', fontsize=16)
+    axes[0, 0].set_title('Axis X')
+    axes[0, 1].set_title('Axis Y')
+    axes[0, 2].set_title('Axis Z')
+    axes[0, 3].set_title('Created Image')
+
     for i, file in enumerate(files):
         # read data
         data = np.loadtxt(path + file, delimiter=',')

@@ -1,7 +1,28 @@
 #!/bin/bash
 
-cd data/ || return
 
+# read number of samples from input argument 
+# (if not provided, default to 100)
+# (if provided, check if it is a number)
+# (if not a number, default to 100)
+# (if a number, check if it is positive)
+# (if not positive, default to 100)
+# (if positive, use it)
+if [ -z "$1" ]; then
+    number_of_samples=20
+else
+    if ! [[ "$1" =~ ^[0-9]+$ ]]; then
+        number_of_samples=20
+    else
+        if [ "$1" -le 0 ]; then
+            number_of_samples=20
+        else
+            number_of_samples="$1"
+        fi
+    fi
+fi
+
+cd data/ || return
 # create a array of labels
 labels=( "A" "E" "I" "O" "U" )
 

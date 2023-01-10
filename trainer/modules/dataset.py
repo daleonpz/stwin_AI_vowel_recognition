@@ -1,20 +1,88 @@
-# create a custom csv dataset in pytorch
-
+import logging
+import math
+import numpy as np
 import torch
 from torch.utils.data import Dataset
+import os
 import pandas as pd
 
+logger = logging.getLogger(__name__)
+
+def normalize_columns_between_0_and_1(matrix):
+    mmin = np.min(matrix, axis=0)
+    mmax = np.max(matrix, axis=0)
+    matrix = matrix - mmin
+    matrix = matrix / (mmax - mmin)
+    return matrix
+
+
+def data2image(data):
+    len_data = len(data)
+    img_size = math.ceil(math.sqrt(len_data))
+
+    if img_size * img_size != len_data:
+        logger.warn('not a perfect square, padding with zeros')
+        data = np.pad(data, (0, img_size * img_size - len_data), 'constant')
+
+    acc = data[:, 0:3]
+    gyro = data[:, 3:6]
+
+    # normalize data and reshape
+    nacc = normalize_columns_between_0_and_1(acc)
+    ngyro = normalize_columns_between_0_and_1(gyro)
+
+    nacc = nacc.reshape(img_size, img_size, 3)
+    ngyro = ngyro.reshape(img_size, img_size, 3)
+
+    image = np.concatenate((nacc, ngyro), axis=2)
+
+    assert image.shape == (img_size, img_size, 6)
+    return  image
+
+
 class CustomDataset(Dataset):
-    def __init__(self, csv_path):
-        self.data = pd.read_csv(csv_path)
-        self.len = self.data.shape[0]
+    def __init__(self, dataset_path, labels_map: dict):
+
+        self.data = []
+        for label in labels_map.keys():
+            files = os.listdir(dataset_path + "/vowel_" + label)
+            logger.debug("Number of files in vowel_" + label + ":", len(files))
+            
+            # iterate through files
+            for file in files:
+                data = pd.read_csv(dataset_path + "/vowel_" + label + "/" + file, header=None)
+                logger.debug(f'data shape as vector: {data.shape}')
+
+                data = data2image(data.values)
+                logger.debug(f'data shape as image: {data.shape}')
+
+                self.data.append((data, labels_map[label]))
+
+        self.len = len(self.data)
 
     def __getitem__(self, index):
-        return self.data.iloc[index, 0], self.data.iloc[index, 1]
+        return self.data[index]
 
     def __len__(self):
         return self.len
 
+
+if __name__ == '__main__':
+    labels_map = {
+        "A": 0,
+        "E": 1
+    }
+    rev_labels_map = {v: k for k, v in labels_map.items()}
+
+    dataset_path = "/home/me/Documents/git/mystuff/tinyml/stwin_AI_vocals_detection/data"
+    dataset = CustomDataset(dataset_path, labels_map)
+
+    print(f'Number of samples: {len(dataset)}')
+    # test
+    print(f'First sample:')
+    data, label = dataset[0]
+    print(f'\t shape: {data.shape}')
+    print(f'\t label: {rev_labels_map[label]}')
 
 
 

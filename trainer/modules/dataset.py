@@ -26,6 +26,7 @@ def data2image(data):
 
     ndata = normalize_columns_between_0_and_1(data)
 
+    logger.debug(f'first data as normalized vector: {ndata[0, :]}')
     # to ensure that each channel corresponds to a different feature
     data = np.zeros((6, img_size, img_size))
     for j in range(6):
@@ -47,9 +48,9 @@ class CustomDataset(Dataset):
             for file in files:
                 logger.debug(f'Reading file {file}')
                 data = pd.read_csv(dataset_path + "/vowel_" + label + "/" + file, header=None)
+                data = data.to_numpy()
                 logger.debug(f'data shape as vector: {data.shape}')
-                logger.debug(f'first data as vector: {data[0, :]}')
-                data = data2image(data.values)
+                data = data2image(data)
 
                 logger.debug(f'first data as image: {data[:,0,0]}')
                 logger.debug(f'data shape as image: {data.shape}')

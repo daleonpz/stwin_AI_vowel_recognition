@@ -26,7 +26,11 @@ def data2image(data):
 
     ndata = normalize_columns_between_0_and_1(data)
 
-    data = ndata.reshape((6, img_size, img_size))
+#     data = ndata.reshape((6, img_size, img_size))
+
+    data = np.zeros((6, img_size, img_size))
+    for j in range(6):
+        data[j, :, :] = ndata[:, j].reshape(img_size, img_size)
 
     assert data.shape == (6, img_size, img_size)
     return data
@@ -42,10 +46,15 @@ class CustomDataset(Dataset):
             
             # iterate through files
             for file in files:
+                print(f'Reading file {file}')
                 data = pd.read_csv(dataset_path + "/vowel_" + label + "/" + file, header=None)
                 logger.debug(f'data shape as vector: {data.shape}')
-
+                print(f'data shape as vector: {data.shape}')
+                print(data[0])
                 data = data2image(data.values)
+                print(f'data shape as image: {data.shape}')
+
+                print(data[:,0,0])
                 logger.debug(f'data shape as image: {data.shape}')
 
                 self.data.append((data, labels_map[label]))
@@ -75,6 +84,5 @@ if __name__ == '__main__':
     data, label = dataset[0]
     print(f'\t shape: {data.shape}')
     print(f'\t label: {rev_labels_map[label]}')
-
 
 

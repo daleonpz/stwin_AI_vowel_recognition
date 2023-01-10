@@ -104,10 +104,10 @@ def train(model, optimizer, criterion, num_epochs, train_loader, val_loader, dev
         progress_bar.set_description(msg)
 
         # Track stats
-        dict_log["train_acc_epoch"].append(train_acc)
-        dict_log["val_acc_epoch"].append(val_acc)
-        dict_log["loss_epoch"].append(loss_curr_epoch)
-        dict_log["val_loss"].append(val_loss)
+        dict_log["train_acc_hist"].append(train_acc)
+        dict_log["val_acc_hist"].append(val_acc)
+        dict_log["train_loss_hist"].append(loss_curr_epoch)
+        dict_log["val_loss_hist"].append(val_loss)
 
 #         if val_loss < best_val_loss:
 #             best_val_loss = val_loss

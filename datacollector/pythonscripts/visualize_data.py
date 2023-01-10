@@ -22,11 +22,13 @@ def main(argv):
     number_of_files = 1
     if len(sys.argv) > 2:
         number_of_files = int(sys.argv[2])
+
     # select 15 files randomly
     files = np.random.choice(files, number_of_files, replace=False)
 
     # create a subplot row for each file
     fig, axes = plt.subplots(number_of_files, 4)
+
 
     fig.suptitle(f'{path}', fontsize=16)
     axes[0, 0].set_title('Axis X')
@@ -36,23 +38,33 @@ def main(argv):
 
     for i, file in enumerate(files):
         # read data
+        print(f'Reading file {file}')
         data = np.loadtxt(path + file, delimiter=',')
+
         acc = data[:, 0:3]
         gyro = data[:, 3:6]
 
-        # normalize data and reshape
-        nacc = normalize_columns_between_0_and_1(acc)
-        ngyro = normalize_columns_between_0_and_1(gyro)
+        ndata = normalize_columns_between_0_and_1(data)
 
-        nacc = nacc.reshape(img_size, img_size, 3)
-        ngyro = ngyro.reshape(img_size, img_size, 3)
+        # 3-rd dimension are [acc_x, acc_y, acc_z, gyro_x, gyro_y, gyro_z]
+        ndata_image = np.zeros((6, img_size, img_size))
+        for j in range(6):
+            ndata_image[j, :, :] = ndata[:, j].reshape(img_size, img_size)
+
+        print(ndata_image.shape) 
+        ndata_image = np.transpose(ndata_image, (1, 2, 0))
+        print(ndata_image.shape)
+
+        nacc = ndata_image[:,:,0:3]
+        ngyro = ndata_image[:,:,3:6]
+
 
         # plot data
         axes[i][0].plot(acc[:, 0])
         axes[i][1].plot(acc[:, 1])
         axes[i][2].plot(acc[:, 2])
         axes[i][3].imshow(nacc)
-
+    
     plt.show()
 
 if __name__ == '__main__':

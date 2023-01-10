@@ -4,28 +4,35 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import logging
 
+logger = logging.getLogger(__name__)
 
-def train_one_epoch(model, optimizer, train_loader, device, criterion, metric):
+def train_one_epoch(model, optimizer, train_loader, device, criterion):
     loss_step, metric_step = [], []
     model.train()
+    correct_predictions, total_predictions = 0, 0
+
     for inp_data, labels in train_loader:
         labels      = labels.view(labels.shape[0]).to(device)
         inp_data    = inp_data.to(device)
         outputs     = model(inp_data)
 
         loss        = criterion(outputs, labels)
-        metric_val  = metric(outputs, labels)
 
         loss_step.append(loss.item())
-        metric_step.append(metric_val.item())
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+    
+        with torch.no_grad():
+            _, predicted = torch.max(outputs, 1)
+            total_predictions   += labels.size(0)
+            correct_predictions += (predicted == labels).sum()
 
     loss_curr_epoch = torch.tensor(loss_step).mean().numpy()
-    metric_epoch = torch.tensor(metric_step).mean().numpy()
-    return loss_curr_epoch, metric_epoch
+    train_acc = 100*correct_predictions / total_predictions
 
+    return loss_curr_epoch, train_acc
 

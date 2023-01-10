@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 class CNN(nn.Module):
-    def __init__(self):
-        super(CNN, self, fc_num_output = 32, fc_hidden_size=[128,48]).__init__()
+    def __init__(self, fc_num_output=32, fc_hidden_size=[128,48]):
+        super(CNN, self).__init__()
         self.conv1 = nn.Conv2d(6, 24, kernel_size=3, stride=1, padding=1) # 3 input channels, 24 output channels, 3x3 kernel
         # equation for output conv layer size: (W-F+2P)/S + 1 # W = input size, F = filter size, P = padding, S = stride
         # (20-3+2)/1 + 1 = 20

@@ -24,20 +24,12 @@ def data2image(data):
         logger.warn('not a perfect square, padding with zeros')
         data = np.pad(data, (0, img_size * img_size - len_data), 'constant')
 
-    acc = data[:, 0:3]
-    gyro = data[:, 3:6]
+    ndata = normalize_columns_between_0_and_1(data)
 
-    # normalize data and reshape
-    nacc = normalize_columns_between_0_and_1(acc)
-    ngyro = normalize_columns_between_0_and_1(gyro)
+    data = ndata.reshape((6, img_size, img_size))
 
-    nacc = nacc.reshape(img_size, img_size, 3)
-    ngyro = ngyro.reshape(img_size, img_size, 3)
-
-    image = np.concatenate((nacc, ngyro), axis=2)
-
-    assert image.shape == (img_size, img_size, 6)
-    return  image
+    assert data.shape == (6, img_size, img_size)
+    return data
 
 
 class CustomDataset(Dataset):

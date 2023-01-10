@@ -13,8 +13,10 @@ def train_one_epoch(model, optimizer, criterion, train_loader, device):
     correct_predictions, total_predictions = 0, 0
 
     for inp_data, labels in train_loader:
+        # zero the parameter gradients
+        optimizer.zero_grad()
+        
         labels      = labels.view(labels.shape[0]).to(device)
-
         # why use torch.tensor?
         #           ERROR MESSAGE:
         #                   Input type (double) and bias type (float) should be the same
@@ -36,7 +38,6 @@ def train_one_epoch(model, optimizer, criterion, train_loader, device):
 
         loss_step.append(loss.item())
 
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
     
@@ -87,8 +88,8 @@ def train(model, optimizer, criterion, num_epochs, train_loader, val_loader, dev
 
     dict_log = {"train_acc_hist":[], "val_acc_hist":[], "train_loss_hist":[], "val_loss_hist":[]}
 
-    train_acc, _    = validate(model, criterion, train_loader, device)
-    val_acc, _      = validate(model, criterion, val_loader, device)
+    _, train_acc    = validate(model, criterion, train_loader, device)
+    _, val_acc      = validate(model, criterion, val_loader, device)
 
     logger.info(f'Init Accuracy of the model: Train:{train_acc:.3f} \t Val:{val_acc:3f}')
 
@@ -96,36 +97,18 @@ def train(model, optimizer, criterion, num_epochs, train_loader, val_loader, dev
     progress_bar = tqdm(range(num_epochs))
 
     for epoch in progress_bar:
-        loss_curr_epoch, train_acc  = train_one_epoch(model, optimizer, criterion, train_loader, device)
-        val_acc, val_loss           = validate(model, criterion, val_loader, device)
+        train_loss, train_acc  = train_one_epoch(model, optimizer, criterion, train_loader, device)
+        val_loss, val_acc      = validate(model, criterion, val_loader, device)
 
         # Print epoch results to screen 
-        msg = (f'Ep {epoch}/{num_epochs}: Accuracy : Train:{train_acc:.2f} \t Val:{val_acc:.2f} || Loss: Train {loss_curr_epoch:.3f} \t Val {val_loss:.3f}')
+        msg = (f'Ep {epoch}/{num_epochs}: Accuracy : Train:{train_acc:.2f} \t Val:{val_acc:.2f} || Loss: Train {train_loss:.3f} \t Val {val_loss:.3f}')
         progress_bar.set_description(msg)
 
         # Track stats
         dict_log["train_acc_hist"].append(train_acc)
         dict_log["val_acc_hist"].append(val_acc)
-        dict_log["train_loss_hist"].append(loss_curr_epoch)
+        dict_log["train_loss_hist"].append(train_loss)
         dict_log["val_loss_hist"].append(val_loss)
-
-#         if val_loss < best_val_loss:
-#             best_val_loss = val_loss
-#             torch.save({
-#                   'epoch': epoch,
-#                   'model_state_dict': model.state_dict(),
-#                   'optimizer_state_dict': optimizer.state_dict(),
-#                   'loss': val_loss,
-#                   }, f'best_model_min_val_loss.pth')
-#         
-#         if val_acc > best_val_acc:
-#             best_val_acc = val_acc
-#             torch.save({
-#                   'epoch': epoch,
-#                   'model_state_dict': model.state_dict(),
-#                   'optimizer_state_dict': optimizer.state_dict(),
-#                   'loss': val_loss,
-#                   }, f'best_model_max_val_acc.pth')
 
     return dict_log
 

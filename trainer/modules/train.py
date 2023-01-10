@@ -18,6 +18,10 @@ def train_one_epoch(model, optimizer, train_loader, device, criterion):
         inp_data    = inp_data.to(device)
         outputs     = model(inp_data)
 
+        logger.debug(f'label shape: {labels.shape}')
+        logger.debug(f'input shape: {inp_data.shape}')
+        logger.debug(f'output shape: {outputs.shape}')
+
         loss        = criterion(outputs, labels)
 
         loss_step.append(loss.item())

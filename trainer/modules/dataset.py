@@ -26,8 +26,7 @@ def data2image(data):
 
     ndata = normalize_columns_between_0_and_1(data)
 
-#     data = ndata.reshape((6, img_size, img_size))
-
+    # to ensure that each channel corresponds to a different feature
     data = np.zeros((6, img_size, img_size))
     for j in range(6):
         data[j, :, :] = ndata[:, j].reshape(img_size, img_size)

@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -77,31 +78,37 @@ def validate(model, criterion, val_loader, device):
         return val_loss_epoch, val_acc
 
 
-# 
-# def train(model, optimizer, criterion, num_epochs, train_loader, val_loader, device):
-#     best_val_loss = 1000
-#     best_val_acc = 0
-#     model = model.to(device)
-#     dict_log = {"train_acc_epoch":[], "val_acc_epoch":[], "loss_epoch":[], "val_loss":[]}
-#     train_acc, _ = validate(model, train_loader, device)
-#     val_acc, _ = validate(model, val_loader, device)
-#     print(f'Init Accuracy of the model: Train:{train_acc:.3f} \t Val:{val_acc:3f}')
-#     pbar = tqdm(range(num_epochs))
-#     for epoch in pbar:
-#         ### START CODE HERE ### (approx. 2 lines)
-#         loss_curr_epoch, train_acc = train_one_epoch(model, optimizer, criterion, train_loader, device)
-#         val_acc, val_loss = validate(model, val_loader, device)
-#         ### END CODE HERE ###
-# 
-#         # Print epoch results to screen 
-#         msg = (f'Ep {epoch}/{num_epochs}: Accuracy : Train:{train_acc:.2f} \t Val:{val_acc:.2f} || Loss: Train {loss_curr_epoch:.3f} \t Val {val_loss:.3f}')
-#         pbar.set_description(msg)
-#         # Track stats
-#         dict_log["train_acc_epoch"].append(train_acc)
-#         dict_log["val_acc_epoch"].append(val_acc)
-#         dict_log["loss_epoch"].append(loss_curr_epoch)
-#         dict_log["val_loss"].append(val_loss)
-# 
+
+def train(model, optimizer, criterion, num_epochs, train_loader, val_loader, device):
+#     best_val_loss   = 1000
+#     best_val_acc    = 0
+
+    model = model.to(device)
+
+    dict_log = {"train_acc_epoch":[], "val_acc_epoch":[], "loss_epoch":[], "val_loss":[]}
+
+    train_acc, _    = validate(model, criterion, train_loader, device)
+    val_acc, _      = validate(model, criterion, val_loader, device)
+
+    logger.info(f'Init Accuracy of the model: Train:{train_acc:.3f} \t Val:{val_acc:3f}')
+
+
+    progress_bar = tqdm(range(num_epochs))
+
+    for epoch in progress_bar:
+        loss_curr_epoch, train_acc  = train_one_epoch(model, optimizer, criterion, train_loader, device)
+        val_acc, val_loss           = validate(model, criterion, val_loader, device)
+
+        # Print epoch results to screen 
+        msg = (f'Ep {epoch}/{num_epochs}: Accuracy : Train:{train_acc:.2f} \t Val:{val_acc:.2f} || Loss: Train {loss_curr_epoch:.3f} \t Val {val_loss:.3f}')
+        progress_bar.set_description(msg)
+
+        # Track stats
+        dict_log["train_acc_epoch"].append(train_acc)
+        dict_log["val_acc_epoch"].append(val_acc)
+        dict_log["loss_epoch"].append(loss_curr_epoch)
+        dict_log["val_loss"].append(val_loss)
+
 #         if val_loss < best_val_loss:
 #             best_val_loss = val_loss
 #             torch.save({
@@ -119,6 +126,6 @@ def validate(model, criterion, val_loader, device):
 #                   'optimizer_state_dict': optimizer.state_dict(),
 #                   'loss': val_loss,
 #                   }, f'best_model_max_val_acc.pth')
-#     return dict_log
-# 
-# 
+
+    return dict_log
+

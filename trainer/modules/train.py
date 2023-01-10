@@ -6,7 +6,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def train_one_epoch(model, optimizer, train_loader, device, criterion):
+def train_one_epoch(model, optimizer, criterion, train_loader, device):
     loss_step, metric_step = [], []
     model.train()
     correct_predictions, total_predictions = 0, 0
@@ -49,3 +49,76 @@ def train_one_epoch(model, optimizer, train_loader, device, criterion):
 
     return loss_curr_epoch, train_acc
 
+
+def validate(model, criterion, val_loader, device):
+    model.eval()
+    correct_predictions, total_predictions = 0, 0
+    loss_step = []
+
+    with torch.no_grad():
+        for inp_data, labels in val_loader:
+            labels      = labels.view(labels.shape[0]).to(device)
+            inp_data    = inp_data.to(device, dtype=torch.float32)
+
+            outputs = model(inp_data)
+
+            val_loss = criterion(outputs, labels)
+            predicted = torch.max(outputs, 1)[1]
+
+            total_predictions   += labels.size(0)
+            correct_predictions += (predicted == labels).sum()
+
+            loss_step.append(val_loss.item())
+
+        val_loss_epoch = torch.tensor(loss_step).mean().numpy()
+        val_acc = 100*correct_predictions / total_predictions
+
+
+        return val_loss_epoch, val_acc
+
+
+# 
+# def train(model, optimizer, criterion, num_epochs, train_loader, val_loader, device):
+#     best_val_loss = 1000
+#     best_val_acc = 0
+#     model = model.to(device)
+#     dict_log = {"train_acc_epoch":[], "val_acc_epoch":[], "loss_epoch":[], "val_loss":[]}
+#     train_acc, _ = validate(model, train_loader, device)
+#     val_acc, _ = validate(model, val_loader, device)
+#     print(f'Init Accuracy of the model: Train:{train_acc:.3f} \t Val:{val_acc:3f}')
+#     pbar = tqdm(range(num_epochs))
+#     for epoch in pbar:
+#         ### START CODE HERE ### (approx. 2 lines)
+#         loss_curr_epoch, train_acc = train_one_epoch(model, optimizer, criterion, train_loader, device)
+#         val_acc, val_loss = validate(model, val_loader, device)
+#         ### END CODE HERE ###
+# 
+#         # Print epoch results to screen 
+#         msg = (f'Ep {epoch}/{num_epochs}: Accuracy : Train:{train_acc:.2f} \t Val:{val_acc:.2f} || Loss: Train {loss_curr_epoch:.3f} \t Val {val_loss:.3f}')
+#         pbar.set_description(msg)
+#         # Track stats
+#         dict_log["train_acc_epoch"].append(train_acc)
+#         dict_log["val_acc_epoch"].append(val_acc)
+#         dict_log["loss_epoch"].append(loss_curr_epoch)
+#         dict_log["val_loss"].append(val_loss)
+# 
+#         if val_loss < best_val_loss:
+#             best_val_loss = val_loss
+#             torch.save({
+#                   'epoch': epoch,
+#                   'model_state_dict': model.state_dict(),
+#                   'optimizer_state_dict': optimizer.state_dict(),
+#                   'loss': val_loss,
+#                   }, f'best_model_min_val_loss.pth')
+#         
+#         if val_acc > best_val_acc:
+#             best_val_acc = val_acc
+#             torch.save({
+#                   'epoch': epoch,
+#                   'model_state_dict': model.state_dict(),
+#                   'optimizer_state_dict': optimizer.state_dict(),
+#                   'loss': val_loss,
+#                   }, f'best_model_max_val_acc.pth')
+#     return dict_log
+# 
+# 

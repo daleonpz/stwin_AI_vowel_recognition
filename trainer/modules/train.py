@@ -19,26 +19,26 @@ def train_one_epoch(model, optimizer, train_loader, device, criterion):
 
         logger.debug(f'input shape: {inp_data.shape}')
         logger.debug(f'\t input type: {inp_data.dtype}')
-        outputs     = model(inp_data)
+#         outputs     = model(inp_data)
 
         logger.debug(f'output shape: {outputs.shape}')
         logger.debug(f'\t output type: {outputs.dtype}')
 
-        loss        = criterion(outputs, labels)
-
-        loss_step.append(loss.item())
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-    
-        with torch.no_grad():
-            _, predicted = torch.max(outputs, 1)
-            total_predictions   += labels.size(0)
-            correct_predictions += (predicted == labels).sum()
-
-    loss_curr_epoch = torch.tensor(loss_step).mean().numpy()
-    train_acc = 100*correct_predictions / total_predictions
-
+#         loss        = criterion(outputs, labels)
+# 
+#         loss_step.append(loss.item())
+# 
+#         optimizer.zero_grad()
+#         loss.backward()
+#         optimizer.step()
+#     
+#         with torch.no_grad():
+#             _, predicted = torch.max(outputs, 1)
+#             total_predictions   += labels.size(0)
+#             correct_predictions += (predicted == labels).sum()
+# 
+#     loss_curr_epoch = torch.tensor(loss_step).mean().numpy()
+#     train_acc = 100*correct_predictions / total_predictions
+# 
     return loss_curr_epoch, train_acc
 

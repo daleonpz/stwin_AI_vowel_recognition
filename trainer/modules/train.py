@@ -40,5 +40,5 @@ def train_one_epoch(model, optimizer, train_loader, device, criterion):
 #     loss_curr_epoch = torch.tensor(loss_step).mean().numpy()
 #     train_acc = 100*correct_predictions / total_predictions
 # 
-    return loss_curr_epoch, train_acc
+#     return loss_curr_epoch, train_acc
 

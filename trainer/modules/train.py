@@ -1,5 +1,3 @@
-# train a custom model, activation softmax, loss cross entropy, optimizer adam, learning rate 0.001, batch size 32, epoch 10 in pytorch
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -43,15 +41,4 @@ def train_one_epoch(model, optimizer, train_loader, device, criterion):
     train_acc = 100*correct_predictions / total_predictions
 
     return loss_curr_epoch, train_acc
-
-
-# split custom dataset into train, test, validation with 80, 10, 10 split
-def split_dataset( Dataset ):
-    train_size = int(0.8 * len(Dataset))
-    test_size = int(0.1 * len(Dataset))
-    val_size = len(Dataset) - train_size - test_size
-    train_dataset, test_dataset, val_dataset = torch.utils.data.random_split(Dataset, [train_size, test_size, val_size])
-    return train_dataset, test_dataset, val_dataset
-
-
 

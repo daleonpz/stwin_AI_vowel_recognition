@@ -61,7 +61,7 @@ class CNN(nn.Module):
         logger.debug("CNN model: pool output shape: %s" % str(x.shape))
         x = self.fc(x)
 #         x = F.log_softmax(x, dim=1) # there is no trainable parameters in this layer
-        x = F.Softmax(dim=1)(x) # there is no trainable parameters in this layer
+        x = F.softmax(dim=1)(x) # there is no trainable parameters in this layer
 
         return x
 

@@ -85,7 +85,7 @@ def train(model, optimizer, criterion, num_epochs, train_loader, val_loader, dev
 
     model = model.to(device)
 
-    dict_log = {"train_acc_epoch":[], "val_acc_epoch":[], "loss_epoch":[], "val_loss":[]}
+    dict_log = {"train_acc_hist":[], "val_acc_hist":[], "train_loss_hist":[], "val_loss_hist":[]}
 
     train_acc, _    = validate(model, criterion, train_loader, device)
     val_acc, _      = validate(model, criterion, val_loader, device)

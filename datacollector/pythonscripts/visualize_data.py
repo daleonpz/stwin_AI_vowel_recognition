@@ -52,6 +52,8 @@ def main(argv):
             ndata_image[j, :, :] = ndata[:, j].reshape(img_size, img_size)
 
         print(ndata_image.shape) 
+        print(ndata_image[:,0,0])
+        print(ndata[0,:])
         ndata_image = np.transpose(ndata_image, (1, 2, 0))
         print(ndata_image.shape)
 

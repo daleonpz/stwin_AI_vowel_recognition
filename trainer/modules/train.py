@@ -21,9 +21,9 @@ def train_one_epoch(model, optimizer, train_loader, device, criterion):
         logger.debug(f'\t input type: {inp_data.dtype}')
 #         outputs     = model(inp_data)
 
-        logger.debug(f'output shape: {outputs.shape}')
-        logger.debug(f'\t output type: {outputs.dtype}')
-
+#         logger.debug(f'output shape: {outputs.shape}')
+#         logger.debug(f'\t output type: {outputs.dtype}')
+# 
 #         loss        = criterion(outputs, labels)
 # 
 #         loss_step.append(loss.item())

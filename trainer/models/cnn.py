@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class CNN(nn.Module):
-    def __init__(self, fc_num_output=32, fc_hidden_size=[128,48]):
+    def __init__(self, fc_num_output=2, fc_hidden_size=[128,48]):
         super(CNN, self).__init__()
         self.conv1 = nn.Conv2d(6, 24, kernel_size=3, stride=1, padding=1) # 3 input channels, 24 output channels, 3x3 kernel
         # equation for output conv layer size: (W-F+2P)/S + 1 # W = input size, F = filter size, P = padding, S = stride
@@ -45,7 +45,7 @@ class CNN(nn.Module):
 #         self.fc = FC(10*10*48, 2) # 10x10x48 input features, 2 output features (for 2 classes)
 
         self.fc = FC(10*10*48, fc_num_output, fc_hidden_size) 
-#         self.fc = FC(10*10*48, 32, [512,128]) # second try 
+        self.softmax = nn.Softmax(dim=1)
         logger.debug("CNN model created")
         logger.debug("CNN model: %s" % self)
 
@@ -60,8 +60,9 @@ class CNN(nn.Module):
         x = self.pool(x)
         logger.debug("CNN model: pool output shape: %s" % str(x.shape))
         x = self.fc(x)
+        x = self.softmax(x)
 #         x = F.log_softmax(x, dim=1) # there is no trainable parameters in this layer
-        x = F.softmax(x, dim=1) # there is no trainable parameters in this layer
+#         x = F.softmax(x, dim=1) # there is no trainable parameters in this layer
 
         return x
 

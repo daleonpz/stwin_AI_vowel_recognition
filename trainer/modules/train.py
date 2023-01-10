@@ -19,7 +19,8 @@ def train_one_epoch(model, optimizer, train_loader, device, criterion):
         #                   Input type (double) and bias type (float) should be the same
         #           DEBUG:modules.train:input shape: torch.Size([20, 20, 20, 6])
         #           DEBUG:modules.train:     input type: torch.float64
-        inp_data    = torch.tensor(inp_data).to(device)
+        # convert to float32
+        inp_data    = torch.tensor(inp_data, dtype=torch.float32).to(device)
         logger.debug(f'label shape: {labels.shape}')
         logger.debug(f'\t label type: {type(labels)}')
 

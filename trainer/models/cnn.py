@@ -14,10 +14,10 @@ logger = logging.getLogger(__name__)
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 24, kernel_size=3, stride=1, padding=1) # 3 input channels, 24 output channels, 3x3 kernel
+        self.conv1 = nn.Conv2d(6, 24, kernel_size=3, stride=1, padding=1) # 3 input channels, 24 output channels, 3x3 kernel
         # equation for output conv layer size: (W-F+2P)/S + 1 # W = input size, F = filter size, P = padding, S = stride
         # (20-3+2)/1 + 1 = 20
-        # number of parameters: (3*3*3+1)*24 = 216
+        # number of parameters: (3*3*6 + 1)*24 = 1,680
         self.bn1 = nn.BatchNorm2d(24)
         # number of parameters: 24
         self.conv2 = nn.Conv2d(24,48, kernel_size=3, stride=1, padding=1) # 24 input channels, 48 output channels, 3x3 kernel
@@ -29,7 +29,7 @@ class CNN(nn.Module):
         # equation for output maxpool layer size: (W-F)/S + 1 # W = input size, F = filter size, S = stride
         # (20-2)/2 + 1 = 10
 
-        # Number of parameters pre fully connected layer: 216 + 10416 + 24 + 48 = 10624
+        # Number of parameters pre fully connected layer: 1,680 + 10416 + 24 + 48 = 11,888
 
         # Fully connected layer
 
@@ -39,6 +39,7 @@ class CNN(nn.Module):
         # 128*32 + 32 = 4128
         # 32*2 + 2 = 66
         # Total: 618722  
+
         self.fc = FC(10*10*48, 2) # 10x10x48 input features, 2 output features (for 2 classes)
         logger.debug("CNN model created")
         logger.debug("CNN model: %s" % self)

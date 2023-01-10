@@ -47,7 +47,7 @@ class CNN(nn.Module):
         logger.debug("CNN model: %s" % self)
 
 
-        # Number of total of parameters: 11,880(CNN) + 620818(FC) + 8 (softmax)= 632706 parameters
+        # Number of total of parameters: 11,880(CNN) + 620818(FC) = 632968 parameters
 
     def forward(self, x):
         x = F.relu(self.bn1(self.conv1(x)))
@@ -57,7 +57,7 @@ class CNN(nn.Module):
         x = self.pool(x)
         logger.debug("CNN model: pool output shape: %s" % str(x.shape))
         x = self.fc(x)
-        x = F.log_softmax(x, dim=1)
+        x = F.log_softmax(x, dim=1) # there is no trainable parameters in this layer
 
         return x
 

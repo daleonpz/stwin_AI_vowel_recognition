@@ -48,7 +48,7 @@ class CustomDataset(Dataset):
                 logger.debug(f'Reading file {file}')
                 data = pd.read_csv(dataset_path + "/vowel_" + label + "/" + file, header=None)
                 logger.debug(f'data shape as vector: {data.shape}')
-                logger.debug(f'first data as vector: {data[0,:]}')
+                logger.debug(f'first data as vector: {data[0]}')
                 data = data2image(data.values)
 
                 logger.debug(f'first data as image: {data[:,0,0]}')

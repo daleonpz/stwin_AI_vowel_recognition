@@ -19,10 +19,12 @@ class CNN(nn.Module):
         # (20-3+2)/1 + 1 = 20
         # number of parameters: (3*3*6 + 1)*24 = 1,320
         self.bn1 = nn.BatchNorm2d(24)
+        self.relu1 = nn.ReLU()
         # number of parameters: 24
         self.conv2 = nn.Conv2d(24,48, kernel_size=3, stride=1, padding=1) # 24 input channels, 48 output channels, 3x3 kernel
         # number of parameters: (3*3*24+1)*48 = 10,416
         self.bn2 = nn.BatchNorm2d(48)
+        self.relu2 = nn.ReLU()
         # number of parameters: 48
         self.pool = nn.MaxPool2d(2, 2)  # Downsample the input image by a factor of 2
         # number of parameters: 0
@@ -53,9 +55,11 @@ class CNN(nn.Module):
         # Number of total of parameters: 11,880(CNN) + 620818(FC) = 632968 parameters
 
     def forward(self, x):
-        x = F.relu(self.bn1(self.conv1(x)))
+#         x = F.relu(self.bn1(self.conv1(x)))
+        x = self.relu1(self.bn1(self.conv1(x)))
         logger.debug("CNN model: conv1 output shape: %s" % str(x.shape))
-        x = F.relu(self.bn2(self.conv2(x)))
+#         x = F.relu(self.bn2(self.conv2(x)))
+        x = self.relu2(self.bn2(self.conv2(x)))
         logger.debug("CNN model: conv2 output shape: %s" % str(x.shape))
         x = self.pool(x)
         logger.debug("CNN model: pool output shape: %s" % str(x.shape))

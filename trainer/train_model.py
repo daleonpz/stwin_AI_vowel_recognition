@@ -25,9 +25,9 @@ def test(model, test_loader, device, criterion):
               criterion=criterion,
               val_loader=test_loader, 
               device=DEVICE)
-    print(f'test: acc {test_acc} \t  loss {test_loss}')
+    print(f'Test: acc {test_acc} \t  loss {test_loss}')
 
-def show_confusion_matrix(model, test_loader, device, criterion):
+def get_confusion_matrix(model, test_loader, device, criterion):
     y_pred = []
     y_true = []
 
@@ -50,6 +50,7 @@ def show_confusion_matrix(model, test_loader, device, criterion):
     print(classification_report(y_true, y_pred,  digits=3))
 
     cm  = confusion_matrix(y_true, y_pred)
+    return cm 
     sns.heatmap(cm/np.sum(cm), annot=True, fmt='.2%', cmap='Blues')
     plt.show()
     plt.ylabel('Actual Category')
@@ -57,35 +58,44 @@ def show_confusion_matrix(model, test_loader, device, criterion):
     plt.savefig('results/confusion_matrix.png')
 
 def loss_plot(title):
-    plt.figure(figsize=(10,5))
     plt.title(title)
     plt.xlabel("Epochs")
     plt.ylabel("Cross Entropy Loss")
     
 def acc_plot(title):
-    plt.figure(figsize=(10,5))
     plt.title(title)
     plt.xlabel("Epochs")
     plt.axhline(y=90, color='red', label="Acceptable accuracy")
     plt.ylabel("Accuracy")
 
-def plot_results(dict_log, epochs, len):
+def plot_results(cm, dict_log, epochs, len):
     x_val = np.arange(1, epochs+1)
+    
+    # subplot 1x3
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
 
-    loss_plot('Losses per Epoch')
-    plt.scatter(x_val, dict_log["val_loss_hist"], label='Validation loss')
-    plt.scatter(x_val, dict_log["train_loss_hist"], label='Train loss')
-    plt.legend()
-    plt.show()
-    plt.savefig('results/losses.png')
+    ax1.plot(x_val, dict_log['train_loss_hist'], label='train')
+    ax1.plot(x_val, dict_log['val_loss_hist'], label='val')
+    ax1.set_title('Loss')
+    ax1.set_xlabel('Epochs')
+    ax1.set_ylabel('Cross Entropy Loss')
+    ax1.legend()
 
-    plt.figure(figsize=(14,8))
-    acc_plot('Validation Accuracy per epoch')
-    plt.scatter(x_val, dict_log["val_acc_hist"], label="Validation acc")
-    plt.scatter(x_val, dict_log["train_acc_hist"], label='Train acc')
-    plt.legend()
+    ax2.plot(x_val, dict_log['train_acc_hist'], label='train')
+    ax2.plot(x_val, dict_log['val_acc_hist'], label='val')
+    ax2.set_title('Accuracy')
+    ax2.set_xlabel('Epochs')
+    ax2.set_ylabel('Accuracy')
+    ax2.legend()
+
+    hm = sns.heatmap(cm/np.sum(cm), annot=True, fmt='.2%', cmap='Blues', ax=ax3)
+    hm.set_title('Confusion Matrix')
+    hm.set_xlabel('Predicted Category')
+    hm.set_ylabel('Actual Category')
+    fig.tight_layout()
+    plt.savefig('results/plot.png')
     plt.show()
-    plt.savefig('results/acc.png')
+
 
 def main(dataset_path, num_epochs=10, batch_size=16, learning_rate=0.00001):
     logging.getLogger('models.cnn_2').setLevel(logging.INFO)
@@ -118,11 +128,12 @@ def main(dataset_path, num_epochs=10, batch_size=16, learning_rate=0.00001):
 
 
     os.makedirs('results', exist_ok=True)
-    plot_results(dict_log, num_epochs, len(train_loader))
+
+    cm = get_confusion_matrix(model, test_loader, DEVICE, criterion)
+
+    plot_results(cm, dict_log, num_epochs, len(train_loader))
 
     test(model, test_loader, DEVICE, criterion)
-
-    show_confusion_matrix(model, test_loader, DEVICE, criterion)
 
     torch.save(model.state_dict(), 'results/model.pth')
 

@@ -61,12 +61,6 @@ class serialCollector:
         print('-----------------------------------------------')
         print('Starting collection of data...')
 
-        # read data from serial port every 5 seconds and store it in an numpy array
-        # the array is then returned
-        # the array is of shape (n, 3) where n is the number of samples and 3 is the number of sensors
-        # the array is of type float32
-
-        # initialize array
         data_array = np.zeros((NUM_SAMPLES, 6), dtype=np.float32)
 
         data = []
@@ -84,7 +78,6 @@ class serialCollector:
                     print("data error, new try...")
                     continue
                 else:
-                    # append whole data to array
                     data_array[i, :] = data
                     break
 

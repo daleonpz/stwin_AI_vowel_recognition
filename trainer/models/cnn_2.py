@@ -30,9 +30,6 @@ class CNN(nn.Module):
         logger.debug("CNN model created")
         logger.debug("CNN model: %s" % self)
 
-
-        # Number of total of parameters: 11,880(CNN) + 620818(FC) = 632968 parameters
-
     def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)

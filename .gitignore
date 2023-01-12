@@ -6,3 +6,4 @@ tags
 *.su
 build/
 */pythonscripts/data/
+__pycache__/

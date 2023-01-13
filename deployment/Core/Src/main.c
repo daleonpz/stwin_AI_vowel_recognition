@@ -21,12 +21,19 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdio.h>
-
+#include <limits.h>
 #include "main.h"
 #include "hci.h"
 
+#include "model.h"
+#include "model_data.h"
+
 /* Private define ------------------------------------------------------------*/
-#define CHECK_VIBRATION_PARAM ((uint16_t)0x1234)
+#define RING_BUFFER_SIZE    (600*6) /* 600 samples for each axis */
+#define SAMPLES_PER_SEC     (1)   /* 1 sample per second */
+#define WAIT_N_SAMPLES      (FREQ_ACC_GYRO_MAG / SAMPLES_PER_SEC)  
+#define TENSOR_INPUT_SIZE   (20*20*6)
+#define INFERENCE_THRESHOLD (0.8)
 
 /* Imported Variables -------------------------------------------------------------*/
 
@@ -53,10 +60,21 @@ uint8_t  NodeName[8];
 
 /* Private variables ---------------------------------------------------------*/
 uint16_t VibrationParam[11];
+CRC_HandleTypeDef hcrc;
 
-#define RING_BUFFER_SIZE    (600*6) /* 4 samples for each axis */
-#define SAMPLES_PER_SEC     (1)   /* 1 sample per second */
-#define WAIT_N_SAMPLES      (FREQ_ACC_GYRO_MAG / SAMPLES_PER_SEC)  
+static ai_handle model = AI_HANDLE_NULL;
+
+AI_ALIGNED(32)
+static ai_float activations[AI_MODEL_DATA_ACTIVATIONS_SIZE];
+AI_ALIGNED(32)
+static ai_float in_data[AI_MODEL_IN_1_SIZE];
+AI_ALIGNED(32)
+static ai_float out_data[AI_MODEL_OUT_1_SIZE];
+
+/* Array of pointer to manage the model's input/output tensors */
+static ai_buffer *ai_input;
+static ai_buffer *ai_output;
+
 
 static int32_t _ring_buffer[RING_BUFFER_SIZE];
 static uint32_t _ring_buffer_index = 0;
@@ -74,6 +92,7 @@ static volatile uint32_t t_stwin=               0;
 static volatile uint8_t  g_led_on           = 0;
 static volatile uint32_t g_acc_counter      = 0;
 static volatile uint8_t  g_is_data_ready    = 0;
+
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 
@@ -83,15 +102,18 @@ static void InitPredictiveMaintenance(void);
 static void ReadMotionData(void);
 
 static void Enable_Inertial_Timer(void);
+static void MX_CRC_Init(void);
 
-// create a ring buffer for the accelerometer data
+// create a ring buffer for the IMU data
 static void ring_buffer_init(void);
 static void ring_buffer_add(int32_t *data);
 static void ring_buffer_print_all(void);
-static void ring_buffer_print_tail(void);
-static void ring_buffer_print_head(void);
-static void ring_buffer_print_last_n(int n);
-static void ring_buffer_get_last_n(int n, int32_t *data);
+
+// AI framework related functions
+static int aiInit(void);
+static int aiRun(const void *in_data, void *out_data);
+static int aiAdquireAndProcessData(void *in_data);
+static int aiPostProcessData(void *out_data);
 
 /* Private functions ---------------------------------------------------------*/
 static void ring_buffer_init(void)
@@ -114,39 +136,149 @@ static void ring_buffer_print_all(void)
     int i;
     _PRINTF("ring buffer: \r\n");
     for (i = 0; i < RING_BUFFER_SIZE; i++) {
-        _PRINTF("%d ", _ring_buffer[i]);
+        _PRINTF("%ld ", _ring_buffer[i]);
     }
-    _PRINTF("\r\n (ring buffer size: %d)\r\n", RING_BUFFER_SIZE);
-    _PRINTF(" index: %d\r\n", _ring_buffer_index);
+    _PRINTF("\r\n (ring buffer size: %i)\r\n", RING_BUFFER_SIZE);
+    _PRINTF(" index: %lu\r\n", _ring_buffer_index);
 }
 
-
-static void ring_buffer_print_tail(void)
+static int aiInit(void) 
 {
-    _PRINTF("%d \r\n", _ring_buffer[_ring_buffer_index]);
+    ai_error err;
+
+    /* Create and initialize the c-model */
+    const ai_handle acts[] = { activations };
+    err = ai_model_create_and_init(&model, acts, NULL);
+    if (err.type != AI_ERROR_NONE) { 
+        _PRINTF("ai_model_create_and_init failed. Error type: %d  code: %d \r\n", err.type, err.code);
+        while(1);
+    };
+
+    /* Reteive pointers to the model's input/output tensors */
+    ai_input    = ai_model_inputs_get(model, NULL);
+    ai_output   = ai_model_outputs_get(model, NULL);
+
+    return 0;
 }
 
-static void ring_buffer_print_head(void)
+static int aiRun(const void *in_data, void *out_data) 
 {
-    _PRINTF("%d \r\n", _ring_buffer[(_ring_buffer_index + 1) % RING_BUFFER_SIZE]);
+    ai_i32 n_batch;
+    ai_error err;
+
+    /* 1 - Update IO handlers with the data payload */
+    ai_input[0].data = AI_HANDLE_PTR(in_data);
+    ai_output[0].data = AI_HANDLE_PTR(out_data);
+
+    /* 2 - Perform the inference */
+    n_batch = ai_model_run(model, &ai_input[0], &ai_output[0]);
+    if (n_batch != 1) 
+    {
+        err = ai_model_get_error(model);
+        if (err.type != AI_ERROR_NONE) 
+        {
+            _PRINTF("ai_model_run failed. error type: %d  code: %d \r\n", err.type, err.code);
+            while(1);
+        }
+    };
+
+    return 0;
 }
 
-static void ring_buffer_print_last_n(int n)
+static int aiAdquireAndProcessData(void *in_data)
 {
-    int i;
-    _PRINTF("last %d: \r\n", n);
-    for (i = 0; i < n; i++) {
-        _PRINTF("%d ", _ring_buffer[(_ring_buffer_index - 1 - i) % RING_BUFFER_SIZE]);
+    ai_float *data = (ai_float *)in_data;
+    ai_float min[6] = {INT32_MAX, INT32_MAX, INT32_MAX, INT32_MAX, INT32_MAX, INT32_MAX};
+    ai_float max[6] = {INT32_MIN, INT32_MIN, INT32_MIN, INT32_MIN, INT32_MIN, INT32_MIN};
+
+    for (int i = 0; i < TENSOR_INPUT_SIZE; i++) {
+        const int index = (_ring_buffer_index + i*6) % RING_BUFFER_SIZE;
+        const int32_t* value = &(_ring_buffer[index]);
+
+//         ((ai_float*)in_data)[i]     = (ai_float)(value[0]);
+//         ((ai_float*)in_data)[i + 1] = (ai_float)(value[1]);
+//         ((ai_float*)in_data)[i + 2] = (ai_float)(value[2]);
+//         ((ai_float*)in_data)[i + 3] = (ai_float)(value[3]);
+//         ((ai_float*)in_data)[i + 4] = (ai_float)(value[4]);
+//         ((ai_float*)in_data)[i + 5] = (ai_float)(value[5]);
+// 
+        for (int j = 0; j < 6; j++) {
+            data[i + j] = (ai_float)(value[j]);
+            min[j] = MIN(min[j], (ai_float)(value[j]) );
+            max[j] = MAX(max[j], (ai_float)(value[j]) );
+        }
+//         min[0] = MIN(min[0], ((ai_float)value[0]));
+//         min[1] = MIN(min[1], ((ai_float)value[1]));
+//         min[2] = MIN(min[2], ((ai_float)value[2]));
+//         min[3] = MIN(min[3], ((ai_float)value[3]));
+//         min[4] = MIN(min[4], ((ai_float)value[4]));
+//         min[5] = MIN(min[5], ((ai_float)value[5]));
+
     }
-    _PRINTF("\r\n");
+
+//     _PRINTF("-----------------------------\r\n");
+//     _PRINTF("min: %f %f %f %f %f %f \r\n", min[0], min[1], min[2], min[3], min[4], min[5]);
+//     _PRINTF("max: %f %f %f %f %f %f \r\n", max[0], max[1], max[2], max[3], max[4], max[5]);
+    // normalize the float array
+    for (int i = 0; i < TENSOR_INPUT_SIZE; i += 6) {
+        for (int j = 0; j < 6; j++) {
+            data[i + j] = (data[i + j] - min[j]) / (max[j] - min[j]);
+        }
+    }
+
+    return 0;
+
 }
 
-static void ring_buffer_get_last_n(int n, int32_t *data)
+static int aiPostProcessData(void *out_data)
 {
-    int i;
-    for (i = 0; i < n; i++) {
-        data[i] = _ring_buffer[(_ring_buffer_index - 1 - i) % RING_BUFFER_SIZE];
+    ai_float *data = (ai_float *)out_data;
+    
+    // print float array
+    _PRINTF("inference data: \r\n");
+    _PRINTF("%f \r\n", data[0]);
+    _PRINTF("%f \r\n", data[1]);
+
+    // find the max value
+    ai_float max = INT32_MIN;
+    int max_index = 0;
+    for (int i = 0; i < AI_MODEL_OUT_1_SIZE; i++) {
+        if (data[i] > max) {
+            max = data[i];
+            max_index = i;
+        }
     }
+
+    if ( INFERENCE_THRESHOLD < max ) {
+        _PRINTF("inference result: %i \r\n", max_index);
+    } else {
+        _PRINTF("inference result: unknown \r\n");
+        max_index = 99;
+    }
+
+    char *gesture = "unknown";
+    switch(max_index){
+        case 0:
+            gesture = "A";
+            break;
+        case 1:
+            gesture = "E";
+            break;
+        case 2:
+            gesture = "I";
+            break;
+        case 3:
+            gesture = "O";
+            break;
+        case 4:
+            gesture = "U";
+            break;
+        default:
+            break;
+    }
+    _PRINTF("gesture: %s \r\n", gesture);
+
+    return 0;
 }
 
 
@@ -161,6 +293,8 @@ int main(void)
 
     HAL_PWREx_EnableVddIO2();
     __HAL_RCC_PWR_CLK_ENABLE();
+  /* The STM32 CRC IP clock should be enabled to use the network runtime library */
+//     __HAL_RCC_CRS_CLK_ENABLE();
     HAL_PWREx_EnableVddUSB();
 
     /* Configure the System clock */
@@ -169,6 +303,8 @@ int main(void)
     InitTargetPlatform();
 
     t_stwin = HAL_GetTick();
+
+    MX_CRC_Init();
 
     /* Check the MetaDataManager */
     InitMetaDataManager((void *)&known_MetaData,MDM_DATA_TYPE_GMD,NULL); 
@@ -198,19 +334,30 @@ int main(void)
     InitTimers();
 
     /* Predictive Maintenance Initialization */
-    InitPredictiveMaintenance();
+//     InitPredictiveMaintenance();
+    
+    aiInit();
+    ring_buffer_init();
 
     Enable_Inertial_Timer();   
 
     /* Infinite loop */
     while (1)
     {
-
+        
         if (WAIT_N_SAMPLES == g_acc_counter){
+            uint32_t tick_start  = 0;
+            uint32_t tick_end    = 0;
             g_led_on ^= 1;
             g_acc_counter = 0;
+            _PRINTF("--------------------\r\n");
             _PRINTF("RUNNING AI MODEL\r\n");
-
+            aiAdquireAndProcessData(in_data);
+            tick_start  = HAL_GetTick();
+            aiRun(in_data, out_data);
+            tick_end    = HAL_GetTick();
+            _PRINTF("inference time: %ld ms\r\n", tick_end - tick_start);
+            aiPostProcessData(out_data);
         }
 
         if (g_is_data_ready){
@@ -227,6 +374,19 @@ int main(void)
     }
 }
 
+static void MX_CRC_Init(void)
+{
+    hcrc.Instance = CRC;
+    hcrc.Init.DefaultPolynomialUse = DEFAULT_POLYNOMIAL_ENABLE;
+    hcrc.Init.DefaultInitValueUse = DEFAULT_INIT_VALUE_ENABLE;
+    hcrc.Init.InputDataInversionMode = CRC_INPUTDATA_INVERSION_NONE;
+    hcrc.Init.OutputDataInversionMode = CRC_OUTPUTDATA_INVERSION_DISABLE;
+    hcrc.InputDataFormat = CRC_INPUTDATA_FORMAT_BYTES;
+    if (HAL_CRC_Init(&hcrc) != HAL_OK)
+    {
+        Error_Handler();
+    }
+}
 /**
  * @brief  Send Motion Data Acc/Mag/Gyro to BLE
  * @param  None
@@ -254,6 +414,7 @@ static void ReadMotionData(void)
 
     int32_t IMU_data[6] = {0};
 
+//     _PRINTF("----------------------\r\n");
     /* Read the Acc values */
     if(TargetBoardFeatures.AccSensorIsInit)
     {
@@ -261,6 +422,8 @@ static void ReadMotionData(void)
         IMU_data[0] = ACC_Value.x;
         IMU_data[1] = ACC_Value.y;
         IMU_data[2] = ACC_Value.z;
+//         _PRINTF("%ld, %ld, %ld", ACC_Value.x, ACC_Value.y, ACC_Value.z);;
+
     }
 
     /* Read the Gyro values */
@@ -270,6 +433,8 @@ static void ReadMotionData(void)
         IMU_data[3] = GYR_Value.x;
         IMU_data[4] = GYR_Value.y;
         IMU_data[5] = GYR_Value.z;
+//         _PRINTF(", %ld, %ld, %ld \r\n", GYR_Value.x, GYR_Value.y, GYR_Value.z);;
+
     }
 
     ring_buffer_add(IMU_data);
@@ -302,7 +467,7 @@ static void InitTimers(void)
     /* Compute the prescaler value to have TIM1 counter clock equal to 10 KHz */
     uwPrescalerValue = (uint32_t) ((SystemCoreClock / 10000) - 1); 
 
-    _PRINTF("system clock ----> %d\r\n", SystemCoreClock);
+    _PRINTF("system clock ----> %lu\r\n", SystemCoreClock);
 
     /* Set TIM1 instance ( Motion ) */
     TimCCHandle.Instance = TIM1;  
@@ -365,18 +530,7 @@ static void InitPredictiveMaintenance(void)
     MotionSP_SetDefaultVibrationParam();
 
     _PRINTF("\r\nAccelerometer parameters:\r\n");
-    _PRINTF("AccOdr= %d\t", AcceleroParams.AccOdr);
-    _PRINTF("AccFifoBdr= %d\t", AcceleroParams.AccFifoBdr);   
-    _PRINTF("fs= %d\t", AcceleroParams.fs);   
     _PRINTF("\r\n");
-
-    _PRINTF("\r\nMotionSP parameters:\r\n");
-    _PRINTF("size= %d\t", MotionSP_Parameters.FftSize); 
-    _PRINTF("wind= %d\t", MotionSP_Parameters.window);  
-    _PRINTF("tacq= %d\t", MotionSP_Parameters.tacq);
-    _PRINTF("ovl= %d\t", MotionSP_Parameters.FftOvl);
-    _PRINTF("subrange_num= %d\t", MotionSP_Parameters.subrange_num);
-    _PRINTF("\r\n\n");
 
     _PRINTF("************************************************************************\r\n\r\n");
 
@@ -535,10 +689,11 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
         g_acc_counter++;
         g_is_data_ready = 1;
 
-        if (g_acc_counter % 50 == 0) 
-        {
-            _PRINTF(" read %d daten\r\n", g_acc_counter);
-        }
+//         if (g_acc_counter % 50 == 0) 
+//         {
+//             _PRINTF(" read %lu daten\r\n", g_acc_counter);
+//             _PRINTF(" %d \r\n", WAIT_N_SAMPLES);
+//         }
     }
 
 }

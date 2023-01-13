@@ -10,6 +10,10 @@ OUTPUT_DIR='../deployment/X-CUBE-AI/App'
 
 ${STM32AI} generate -m ${ONNX_MODEL} --type onnx -o ${OUTPUT_DIR} --name ${NAME_PROJECT}
 
-mv stm32ai_ws  ${OUTPUT_DIR}
+# create directory for the C files, if it does not exist
+# and copy the C files to the directory
+mkdir -p ${OUTPUT_DIR} 
+cp -r stm32ai_ws  ${OUTPUT_DIR}
+rm -rf stm32ai_ws
 
 

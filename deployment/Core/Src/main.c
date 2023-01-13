@@ -35,6 +35,7 @@
 //extern void CDC_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 //#endif /* PREDMNT1_ENABLE_PRINTF */
 
+
 /* Exported Variables -------------------------------------------------------------*/
 volatile uint32_t HCI_ProcessEvent=      0;
 volatile uint8_t FifoEnabled = 0;
@@ -54,6 +55,11 @@ uint8_t  NodeName[8];
 
 /* Private variables ---------------------------------------------------------*/
 uint16_t VibrationParam[11];
+
+#define  RING_BUFFER_SIZE  (4*6) /* 4 samples for each axis */
+static int32_t _ring_buffer[RING_BUFFER_SIZE];
+static uint32_t _ring_buffer_index = 0;
+
 
 /* Table with All the known Meta Data */
 MDM_knownGMD_t known_MetaData[]={
@@ -76,6 +82,69 @@ static void InitPredictiveMaintenance(void);
 static void SendMotionData(void);
 
 static void Enable_Inertial_Timer(void);
+
+// create a ring buffer for the accelerometer data
+static void ring_buffer_init(void);
+static void ring_buffer_add(int32_t *data);
+static void ring_buffer_print_all(void);
+static void ring_buffer_print_tail(void);
+static void ring_buffer_print_head(void);
+static void ring_buffer_print_last_n(int n);
+static void ring_buffer_get_last_n(int n, int32_t *data);
+
+/* Private functions ---------------------------------------------------------*/
+static void ring_buffer_init(void)
+{
+    _ring_buffer_index = 0;
+}
+
+
+static void ring_buffer_add(int32_t *data)
+{
+    int i;
+    for (i = 0; i < 6; i++) {
+        _ring_buffer[_ring_buffer_index] = data[i];
+        _ring_buffer_index = (_ring_buffer_index + 1) % RING_BUFFER_SIZE;
+    }
+}
+
+static void ring_buffer_print_all(void)
+{
+    int i;
+    for (i = 0; i < RING_BUFFER_SIZE; i++) {
+        _PRINTF("%d ", _ring_buffer[i]);
+    }
+    _PRINTF(" (ring buffer size: %d)", RING_BUFFER_SIZE);
+}
+
+
+static void ring_buffer_print_tail(void)
+{
+    _PRINTF("%d ", _ring_buffer[_ring_buffer_index]);
+}
+
+static void ring_buffer_print_head(void)
+{
+    _PRINTF("%d ", _ring_buffer[(_ring_buffer_index + 1) % RING_BUFFER_SIZE]);
+}
+
+static void ring_buffer_print_last_n(int n)
+{
+    int i;
+    _PRINTF("last %d: ", n);
+    for (i = 0; i < n; i++) {
+        _PRINTF("%d ", _ring_buffer[(_ring_buffer_index - 1 - i) % RING_BUFFER_SIZE]);
+    }
+}
+
+static void ring_buffer_get_last_n(int n, int32_t *data)
+{
+    int i;
+    for (i = 0; i < n; i++) {
+        data[i] = _ring_buffer[(_ring_buffer_index - 1 - i) % RING_BUFFER_SIZE];
+    }
+}
+
 
 /**
  * @brief  Main program
@@ -100,7 +169,7 @@ int main(void)
     /* Check the MetaDataManager */
     InitMetaDataManager((void *)&known_MetaData,MDM_DATA_TYPE_GMD,NULL); 
 
-    PREDMNT1_PRINTF("\n\t(HAL %ld.%ld.%ld_%ld)\r\n"
+    _PRINTF("\n\t(HAL %ld.%ld.%ld_%ld)\r\n"
             "\tCompiled %s %s"
 
 #if defined (__IAR_SYSTEMS_ICC__)
@@ -122,13 +191,6 @@ int main(void)
             ALGO_PERIOD_ACC_GYRO_MAG,
             ALGO_PERIOD_AUDIO_LEVEL);
 
-#ifdef PREDMNT1_DEBUG_CONNECTION
-    PREDMNT1_PRINTF("Debug Connection         Enabled\r\n");
-#endif /* PREDMNT1_DEBUG_CONNECTION */
-
-#ifdef PREDMNT1_DEBUG_NOTIFY_TRAMISSION
-    PREDMNT1_PRINTF("Debug Notify Trasmission Enabled\r\n\n");
-#endif /* PREDMNT1_DEBUG_NOTIFY_TRAMISSION */
 
     HCI_TL_SPI_Reset();
 
@@ -192,13 +254,17 @@ static void SendMotionData(void)
     TargetBoardFeatures.GyroSensorIsInit= 1;
     TargetBoardFeatures.MagSensorIsInit = 0;
 
-//     _PRINTF("[");
+
+    int32_t IMU_data[6] = {0};
 
     /* Read the Acc values */
     if(TargetBoardFeatures.AccSensorIsInit)
     {
         MOTION_SENSOR_GetAxes(ACCELERO_INSTANCE, MOTION_ACCELERO, &ACC_Value);
-        _PRINTF("%ld, %ld, %ld", ACC_Value.x, ACC_Value.y, ACC_Value.z);;
+        _PRINTF("%ld, %ld, %ld", ACC_Value.x, ACC_Value.y, ACC_Value.z);
+        IMU_data[0] = ACC_Value.x;
+        IMU_data[1] = ACC_Value.y;
+        IMU_data[2] = ACC_Value.z;
     }
 
     /* Read the Gyro values */
@@ -206,8 +272,12 @@ static void SendMotionData(void)
     {
         MOTION_SENSOR_GetAxes(GYRO_INSTANCE,MOTION_GYRO, &GYR_Value);
         _PRINTF(", %ld, %ld, %ld ", GYR_Value.x, GYR_Value.y, GYR_Value.z);;
-//         PREDMNT1_PRINTF("Sending GYR: %d %d %d \r\n", GYR_Value.x/100, GYR_Value.y/100, GYR_Value.z/100); // from BLE_AccGyroMagUpdate
+        IMU_data[3] = GYR_Value.x;
+        IMU_data[4] = GYR_Value.y;
+        IMU_data[5] = GYR_Value.z;
     }
+
+    ring_buffer_add(IMU_data);
 
     /* Read the Magneto values */
     if(TargetBoardFeatures.MagSensorIsInit)
@@ -216,8 +286,6 @@ static void SendMotionData(void)
         _PRINTF("%ld, %ld, %ld ", MAG_Value.x, MAG_Value.y, MAG_Value.z);;
 
     }
-//     _PRINTF("],"); // this will be parse in python 
-    // in python [[ x,y,z],] = [[x,y,z]] .. the last ',' will be ignored
 }
 
 
@@ -238,7 +306,7 @@ static void InitTimers(void)
     /* Compute the prescaler value to have TIM1 counter clock equal to 10 KHz */
     uwPrescalerValue = (uint32_t) ((SystemCoreClock / 10000) - 1); 
 
-    PREDMNT1_PRINTF("system clock ----> %d\r\n", SystemCoreClock);
+    _PRINTF("system clock ----> %d\r\n", SystemCoreClock);
 
     /* Set TIM1 instance ( Motion ) */
     TimCCHandle.Instance = TIM1;  
@@ -300,27 +368,27 @@ static void InitPredictiveMaintenance(void)
     /* Set the vibration parameters with default values */
     MotionSP_SetDefaultVibrationParam();
 
-    PREDMNT1_PRINTF("\r\nAccelerometer parameters:\r\n");
-    PREDMNT1_PRINTF("AccOdr= %d\t", AcceleroParams.AccOdr);
-    PREDMNT1_PRINTF("AccFifoBdr= %d\t", AcceleroParams.AccFifoBdr);   
-    PREDMNT1_PRINTF("fs= %d\t", AcceleroParams.fs);   
-    PREDMNT1_PRINTF("\r\n");
+    _PRINTF("\r\nAccelerometer parameters:\r\n");
+    _PRINTF("AccOdr= %d\t", AcceleroParams.AccOdr);
+    _PRINTF("AccFifoBdr= %d\t", AcceleroParams.AccFifoBdr);   
+    _PRINTF("fs= %d\t", AcceleroParams.fs);   
+    _PRINTF("\r\n");
 
-    PREDMNT1_PRINTF("\r\nMotionSP parameters:\r\n");
-    PREDMNT1_PRINTF("size= %d\t", MotionSP_Parameters.FftSize); 
-    PREDMNT1_PRINTF("wind= %d\t", MotionSP_Parameters.window);  
-    PREDMNT1_PRINTF("tacq= %d\t", MotionSP_Parameters.tacq);
-    PREDMNT1_PRINTF("ovl= %d\t", MotionSP_Parameters.FftOvl);
-    PREDMNT1_PRINTF("subrange_num= %d\t", MotionSP_Parameters.subrange_num);
-    PREDMNT1_PRINTF("\r\n\n");
+    _PRINTF("\r\nMotionSP parameters:\r\n");
+    _PRINTF("size= %d\t", MotionSP_Parameters.FftSize); 
+    _PRINTF("wind= %d\t", MotionSP_Parameters.window);  
+    _PRINTF("tacq= %d\t", MotionSP_Parameters.tacq);
+    _PRINTF("ovl= %d\t", MotionSP_Parameters.FftOvl);
+    _PRINTF("subrange_num= %d\t", MotionSP_Parameters.subrange_num);
+    _PRINTF("\r\n\n");
 
-    PREDMNT1_PRINTF("************************************************************************\r\n\r\n");
+    _PRINTF("************************************************************************\r\n\r\n");
 
     /* Initializes accelerometer with vibration parameters values */
     if(MotionSP_AcceleroConfig()) {
-        PREDMNT1_PRINTF("\tFailed Set Accelerometer Parameters\r\n\n");
+        _PRINTF("\tFailed Set Accelerometer Parameters\r\n\n");
     } else {
-        PREDMNT1_PRINTF("\tOK Set Accelerometer Parameters\r\n\n");
+        _PRINTF("\tOK Set Accelerometer Parameters\r\n\n");
     }
 }
 

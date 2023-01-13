@@ -1,5 +1,5 @@
 Neural Network Tools for STM32AI v1.6.0 (STM.ai v7.1.0-RC3)
-Created date          : 2023-01-13 14:22:48
+Created date          : 2023-01-13 14:26:00
 Parameters            : generate -m results/model.onnx --type onnx -o ../deployment/X-CUBE-AI/App --name model
 
 Exec/report summary (generate)

@@ -10,4 +10,6 @@ OUTPUT_DIR='../deployment/X-CUBE-AI/App'
 
 ${STM32AI} generate -m ${ONNX_MODEL} --type onnx -o ${OUTPUT_DIR} --name ${NAME_PROJECT}
 
+mv stm32ai_ws  ${OUTPUT_DIR}
+
 

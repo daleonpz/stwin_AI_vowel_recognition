@@ -109,8 +109,8 @@ DEBUG_LEVEL     = "-g3"
 # MORE_FLAGS      = "-specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb"
 COMPILER_OPTS   = "-mcpu=cortex-m4 -std=gnu11 -g3 -DSTM32L4R9xx -DUSE_HAL_DRIVER -DBLUENRG1_NWK_COPROC -DSPI_INTERFACE -DARM_MATH_CM4"
 CFLAGS          = "-Os -ffunction-sections -Wall -fstack-usage -MMD -MP"
+# CFLAGS          = "-Os -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP"
 MORE_FLAGS      = "--specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb"
-
 
 BUILD_DIR   = "build"
 FileUtils.mkdir_p "#{BUILD_DIR}/"
@@ -148,7 +148,7 @@ end
 
 task :build => OBJECTS do
     puts "#{BBlue}[Linking]#{Color_Off}\n"
-    quiet_sh "#{GCC} -o #{TARGET}.elf  #{OBJECTS}   -l:libarm_cortexM4lf_math.a -mcpu=cortex-m4 -T\"#{LINKERFILE}\"  --specs=nosys.specs -Wl,-Map=#{TARGET}.map -Wl,--gc-sections -static -Wl,--start-group -l:libarm_cortexM4lf_math.a -Wl,--end-group -LDrivers/CMSIS/Lib/GCC  -u_printf_float #{MORE_FLAGS} -Wl,--start-group -lc -lm -Wl,--end-group "
+    quiet_sh "#{GCC} -o #{TARGET}.elf  #{OBJECTS}   -l:NetworkRuntime710_CM4_GCC.a -l:libarm_cortexM4lf_math.a -mcpu=cortex-m4 -T\"#{LINKERFILE}\"  --specs=nosys.specs -Wl,-Map=#{TARGET}.map -Wl,--gc-sections -static -Wl,--start-group -l:libarm_cortexM4lf_math.a -Wl,--end-group -LDrivers/CMSIS/Lib/GCC  -LMiddlewares/ST/AI/Lib -u_printf_float #{MORE_FLAGS} -Wl,--start-group -lc -lm -Wl,--end-group "
 end
 
 

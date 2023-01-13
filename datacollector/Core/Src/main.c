@@ -136,7 +136,7 @@ int main(void)
     InitTimers();
 
     /* Predictive Maintenance Initialization */
-    InitPredictiveMaintenance();
+//     InitPredictiveMaintenance();
 
     Enable_Inertial_Timer();   
 

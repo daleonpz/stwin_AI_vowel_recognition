@@ -1,0 +1,158 @@
+Neural Network Tools for STM32AI v1.6.0 (STM.ai v7.1.0-RC3)
+Created date          : 2023-01-13 14:22:48
+Parameters            : generate -m results/model.onnx --type onnx -o ../deployment/X-CUBE-AI/App --name model
+
+Exec/report summary (generate)
+------------------------------------------------------------------------------------------------------------------------
+model file            : /home/me/Documents/git/mystuff/tinyml/stwin_AI_vowel_detection/trainer/results/model.onnx
+type                  : onnx
+c_name                : model
+compression           : lossless
+workspace dir         : /home/me/Documents/git/mystuff/tinyml/stwin_AI_vowel_detection/trainer/stm32ai_ws
+output dir            : /home/me/Documents/git/mystuff/tinyml/stwin_AI_vowel_detection/deployment/X-CUBE-AI/App
+model_name            : model
+model_hash            : 90a229c1150941d5287056359126c448
+input 1/1             : 'input'
+                        2400 items, 9.38 KiB, ai_float, float, (1,6,20,20), domain:user/
+output 1/1            : 'output'
+                        2 items, 8 B, ai_float, float, (1,1,1,2), domain:user/
+params #              : 8,102 items (31.65 KiB)
+macc                  : 537,700
+weights (ro)          : 32,408 B (31.65 KiB) (1 segment)
+activations (rw)      : 12,624 B (12.33 KiB) (1 segment)
+ram (total)           : 22,232 B (21.71 KiB) = 12,624 + 9,600 + 8
+
+Model name - model ['input'] ['output']
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+id   layer (type)                                       oshape         param/size     macc      connected to                        |   c_size             c_macc            c_type               
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+7    fc_layers_0_weight (Placeholder)                   (1,600,1,8)    4,800/19,200                                                 |   -19,200(-100.0%)                    
+     fc_layers_0_bias (Placeholder)                     (1,1,1,8)      8/32                                                         |   -32(-100.0%)                        
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+9    fc_layers_2_weight (Placeholder)                   (1,8,1,2)      16/64                                                        |   -64(-100.0%)                        
+     fc_layers_2_bias (Placeholder)                     (1,1,1,2)      2/8                                                          |   -8(-100.0%)                         
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+0    input (Input)                                      (1,20,20,6)                                                                 |                                        transpose()[0]       
+     _conv1_conv1_0_Conv_output_0 (Conv2D)              (1,20,20,12)   660/2,640      259,212   input                               |                      +9,600(+3.7%)     optimized_conv2d()[1]
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1    _conv1_conv1_1_Relu_output_0 (Nonlinearity)        (1,20,20,12)                  4,800     _conv1_conv1_0_Conv_output_0        |                      -4,800(-100.0%)  
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2    _pool1_MaxPool_output_0 (Pool)                     (1,10,10,12)                  4,800     _conv1_conv1_1_Relu_output_0        |                      -4,800(-100.0%)  
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3    _conv2_conv2_0_Conv_output_0 (Conv2D)              (1,10,10,24)   2,616/10,464   259,224   _pool1_MaxPool_output_0             |                      +4,800(+1.9%)     optimized_conv2d()[2]
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4    _conv2_conv2_1_Relu_output_0 (Nonlinearity)        (1,10,10,24)                  2,400     _conv2_conv2_0_Conv_output_0        |                      -2,400(-100.0%)  
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5    _pool2_MaxPool_output_0 (Pool)                     (1,5,5,24)                    2,400     _conv2_conv2_1_Relu_output_0        |                      -2,400(-100.0%)  
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+6    _fc_Reshape_output_0 (Reshape)                     (1,1,1,600)                             _pool2_MaxPool_output_0             |                                       
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+7    _fc_layers_layers_0_Gemm_output_0 (Gemm)           (1,1,1,8)                     4,808     _fc_Reshape_output_0                |   +19,232(+100.0%)                     gemm()[3]            
+                                                                                                fc_layers_0_weight                  |  
+                                                                                                fc_layers_0_bias                    |  
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+8    _fc_layers_layers_1_Relu_output_0 (Nonlinearity)   (1,1,1,8)                     8         _fc_layers_layers_0_Gemm_output_0   |                                        nl()[4]              
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+9    _fc_layers_layers_2_Gemm_output_0 (Gemm)           (1,1,1,2)                     18        _fc_layers_layers_1_Relu_output_0   |   +72(+100.0%)                         gemm()[5]            
+                                                                                                fc_layers_2_weight                  |  
+                                                                                                fc_layers_2_bias                    |  
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+10   output (Nonlinearity)                              (1,1,1,2)                     30        _fc_layers_layers_2_Gemm_output_0   |                                        nl()/o[6]            
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+model/c-model: macc=537,700/537,700  weights=32,408/32,408  activations=--/12,624 io=--/9,608
+
+
+
+Generated C-graph summary
+------------------------------------------------------------------------------------------------------------------------
+model name            : model
+c-name                : model
+c-node #              : 7
+c-array #             : 18
+activations size      : 12624 (1 segments)
+weights size          : 32408 (1 segments)
+macc                  : 537700
+inputs                : ['input_output']
+outputs               : ['output_output']
+
+C-Arrays (18)
+-----------------------------------------------------------------------------------------------------------------------
+c_id   name (*_array)                             item/size    domain/mem-pool           c-type        fmt     comment
+-----------------------------------------------------------------------------------------------------------------------
+0      input_output                               2400/9600    user/                     float         float   /input 
+1      input_Transpose_output                     2400/9600    activations/**default**   float         float          
+2      _conv1_conv1_0_Conv_output_0_output        1200/4800    activations/**default**   float         float          
+3      _conv2_conv2_0_Conv_output_0_output        600/2400     activations/**default**   float         float          
+4      _fc_layers_layers_0_Gemm_output_0_output   8/32         activations/**default**   float         float          
+5      _fc_layers_layers_1_Relu_output_0_output   8/32         activations/**default**   float         float          
+6      _fc_layers_layers_2_Gemm_output_0_output   2/8          activations/**default**   float         float          
+7      output_output                              2/8          user/                     float         float   /output
+8      _conv1_conv1_0_Conv_output_0_weights       648/2592     weights/                  const float   float          
+9      _conv1_conv1_0_Conv_output_0_bias          12/48        weights/                  const float   float          
+10     _conv2_conv2_0_Conv_output_0_weights       2592/10368   weights/                  const float   float          
+11     _conv2_conv2_0_Conv_output_0_bias          24/96        weights/                  const float   float          
+12     fc_layers_2_bias                           2/8          weights/                  const float   float          
+13     fc_layers_2_weight                         16/64        weights/                  const float   float          
+14     fc_layers_0_bias                           8/32         weights/                  const float   float          
+15     fc_layers_0_weight                         4800/19200   weights/                  const float   float          
+16     _conv1_conv1_0_Conv_output_0_scratch0      480/1920     activations/**default**   float         float          
+17     _conv2_conv2_0_Conv_output_0_scratch0      480/1920     activations/**default**   float         float          
+-----------------------------------------------------------------------------------------------------------------------
+
+C-Layers (7)
+---------------------------------------------------------------------------------------------------------------------------------------------------
+c_id   name (*_layer)                      id   layer_type         macc     rom     tensors                                       shape (array id)
+---------------------------------------------------------------------------------------------------------------------------------------------------
+0      input_Transpose                     2    transpose          0        0       I: input_output                               (1,6,20,20) (0) 
+                                                                                    O: input_Transpose_output                     (1,20,20,6) (1) 
+---------------------------------------------------------------------------------------------------------------------------------------------------
+1      _conv1_conv1_0_Conv_output_0        2    optimized_conv2d   268812   2640    I: input_Transpose_output                     (1,20,20,6) (1) 
+                                                                                    S: _conv1_conv1_0_Conv_output_0_scratch0                      
+                                                                                    W: _conv1_conv1_0_Conv_output_0_weights       (6,12,3,3) (8)  
+                                                                                    W: _conv1_conv1_0_Conv_output_0_bias          (1,1,1,12) (9)  
+                                                                                    O: _conv1_conv1_0_Conv_output_0_output        (1,10,10,12) (2)
+---------------------------------------------------------------------------------------------------------------------------------------------------
+2      _conv2_conv2_0_Conv_output_0        5    optimized_conv2d   264024   10464   I: _conv1_conv1_0_Conv_output_0_output        (1,10,10,12) (2)
+                                                                                    S: _conv2_conv2_0_Conv_output_0_scratch0                      
+                                                                                    W: _conv2_conv2_0_Conv_output_0_weights       (12,24,3,3) (10)
+                                                                                    W: _conv2_conv2_0_Conv_output_0_bias          (1,1,1,24) (11) 
+                                                                                    O: _conv2_conv2_0_Conv_output_0_output        (1,5,5,24) (3)  
+---------------------------------------------------------------------------------------------------------------------------------------------------
+3      _fc_layers_layers_0_Gemm_output_0   7    gemm               4808     19232   I: _conv2_conv2_0_Conv_output_0_output0       (1,1,1,600) (3) 
+                                                                                    I: fc_layers_0_weight                         (1,8,1,600) (15)
+                                                                                    I: fc_layers_0_bias                           (1,1,1,8) (14)  
+                                                                                    O: _fc_layers_layers_0_Gemm_output_0_output   (1,1,1,8) (4)   
+---------------------------------------------------------------------------------------------------------------------------------------------------
+4      _fc_layers_layers_1_Relu_output_0   8    nl                 8        0       I: _fc_layers_layers_0_Gemm_output_0_output   (1,1,1,8) (4)   
+                                                                                    O: _fc_layers_layers_1_Relu_output_0_output   (1,1,1,8) (5)   
+---------------------------------------------------------------------------------------------------------------------------------------------------
+5      _fc_layers_layers_2_Gemm_output_0   9    gemm               18       72      I: _fc_layers_layers_1_Relu_output_0_output   (1,1,1,8) (5)   
+                                                                                    I: fc_layers_2_weight                         (1,2,1,8) (13)  
+                                                                                    I: fc_layers_2_bias                           (1,1,1,2) (12)  
+                                                                                    O: _fc_layers_layers_2_Gemm_output_0_output   (1,1,1,2) (6)   
+---------------------------------------------------------------------------------------------------------------------------------------------------
+6      output                              10   nl                 30       0       I: _fc_layers_layers_2_Gemm_output_0_output   (1,1,1,2) (6)   
+                                                                                    O: output_output                              (1,1,1,2) (7)   
+---------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+Complexity report per layer - macc=537,700 weights=32,408 act=12,624 ram_io=9,608
+--------------------------------------------------------------------------------------------------
+id   name                                c_macc                    c_rom                     c_id
+--------------------------------------------------------------------------------------------------
+0    input                               |                  0.0%   |                  0.0%   [0] 
+0    _conv1_conv1_0_Conv_output_0        ||||||||||||||||  50.0%   |||                8.1%   [1] 
+3    _conv2_conv2_0_Conv_output_0        |||||||||||||||   49.1%   |||||||||         32.3%   [2] 
+7    _fc_layers_layers_0_Gemm_output_0   |                  0.9%   ||||||||||||||||  59.3%   [3] 
+8    _fc_layers_layers_1_Relu_output_0   |                  0.0%   |                  0.0%   [4] 
+9    _fc_layers_layers_2_Gemm_output_0   |                  0.0%   |                  0.2%   [5] 
+10   output                              |                  0.0%   |                  0.0%   [6] 
+
+Generated files (5)
+----------------------------------------------------------------------------------------------------------------
+/home/me/Documents/git/mystuff/tinyml/stwin_AI_vowel_detection/deployment/X-CUBE-AI/App/model_config.h
+/home/me/Documents/git/mystuff/tinyml/stwin_AI_vowel_detection/deployment/X-CUBE-AI/App/model.h
+/home/me/Documents/git/mystuff/tinyml/stwin_AI_vowel_detection/deployment/X-CUBE-AI/App/model.c
+/home/me/Documents/git/mystuff/tinyml/stwin_AI_vowel_detection/deployment/X-CUBE-AI/App/model_data.h
+/home/me/Documents/git/mystuff/tinyml/stwin_AI_vowel_detection/deployment/X-CUBE-AI/App/model_data.c

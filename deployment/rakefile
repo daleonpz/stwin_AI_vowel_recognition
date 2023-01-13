@@ -1,0 +1,183 @@
+require 'rake/clean'
+
+##############################################
+## Define Compiler/linker Variables 
+##############################################
+
+# find * -name '*.h' -exec dirname {} \; | sort | uniq
+
+# INCLUDE_LIBS_PATH = " -ICore/Inc -IDrivers/STM32F7xx_HAL_Driver/Inc -IDrivers/STM32F7xx_HAL_Driver/Inc/Legacy -IDrivers/CMSIS/Device/ST/STM32F7xx/Include -IDrivers/CMSIS/Include -IMiddlewares/ST/AI/Inc -IX-CUBE-AI/App   "
+
+INCLUDE_LIBS_PATH = "\
+-ICore/Inc \
+-IDrivers/CMSIS/Device/ST/STM32L4xx/Include \
+-IDrivers/CMSIS/DSP/Include \
+-IDrivers/CMSIS/Include \
+-IDrivers/STM32L4xx_HAL_Driver/Inc \
+-IDrivers/BSP/Components/Common \
+-IDrivers/BSP/Components/hts221 \
+-IDrivers/BSP/Components/lps22hh \
+-IDrivers/BSP/Components/iis2dh/ \
+-IDrivers/BSP/Components/ism330dhcx \
+-IDrivers/BSP/Components/iis2mdc \
+-IDrivers/BSP/STWIN \
+-IMiddlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc \
+-IMiddlewares/ST/STM32_USB_Device_Library/Core/Inc \
+-IMiddlewares/ST/BlueNRG-2/includes \
+-IMiddlewares/ST/BlueNRG-2/utils \
+-IMiddlewares/ST/BlueNRG-2/hci/hci_tl_patterns/Basic \
+-IMiddlewares/ST/STM32_BLE_Manager/Inc \
+-IMiddlewares/ST/STM32_MetaDataManager \
+-IMiddlewares/ST/STM32_MotionSP_Library/Inc \
+-IMiddlewares/ST/AI/Inc \
+-IMiddlewares/Third_Party/parson \
+-IX-CUBE-AI/App \
+-IPatch"
+
+
+# SOURCES     = Rake::FileList["**/*.c", "**/*.s"]
+SOURCES     = Rake::FileList["Core/**/*.c", "Core/**/*.s", "Patch/**/*.c",
+"X-CUBE-AI/App/model.c",
+"X-CUBE-AI/App/model_data.c",
+"Middlewares/Third_Party/parson/parson.c",
+"Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c",
+"Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c",
+"Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c",
+"Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c",
+"Middlewares/ST/STM32_MotionSP_Library/Src/MotionSP.c",
+"Middlewares/ST/STM32_MetaDataManager/MetaDataManager.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_adc.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_adc_ex.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_cortex.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_crc.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_crc_ex.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_dfsdm.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_dma.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_exti.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_flash.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_flash_ex.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_gpio.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_i2c.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_i2c_ex.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_pcd.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_pcd_ex.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_pwr.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_pwr_ex.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_rcc.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_rcc_ex.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_spi.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_spi_ex.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_tim.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_tim_ex.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_uart.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_uart_ex.c",
+"Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_ll_usb.c",
+"Drivers/BSP/STWIN/STWIN.c",
+"Drivers/BSP/STWIN/STWIN_audio.c",
+"Drivers/BSP/STWIN/STWIN_bc.c",
+"Drivers/BSP/STWIN/STWIN_bus.c",
+"Drivers/BSP/STWIN/STWIN_env_sensors.c",
+"Drivers/BSP/STWIN/STWIN_motion_sensors.c",
+"Drivers/BSP/Components/hts221/hts221.c",
+"Drivers/BSP/Components/hts221/hts221_reg.c",
+"Drivers/BSP/Components/iis2mdc/iis2mdc.c",
+"Drivers/BSP/Components/iis2mdc/iis2mdc_reg.c",
+"Drivers/BSP/Components/ism330dhcx/ism330dhcx_reg.c",
+"Drivers/BSP/Components/lps22hh/lps22hh.c",
+"Drivers/BSP/Components/lps22hh/lps22hh_reg.c",
+"Drivers/BSP/Components/iis2dh/iis2dh.c", 
+"Drivers/BSP/Components/iis2dh/iis2dh_reg.c"
+]
+
+
+
+OBJECTS = SOURCES.ext(".obj")
+
+
+TOOLCHAIN_PATH = "/opt/st/stm32cubeide_1.6.1/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.9-2020-q2-update.linux64_1.5.0.202011040924/"
+COMPILER_PATH   = "#{TOOLCHAIN_PATH}/tools"
+COMPILER_PREFIX = "arm-none-eabi-"
+GCC             = "#{COMPILER_PATH}/bin/#{COMPILER_PREFIX}gcc" 
+
+
+
+MCPU            = "-mcpu=cortex-m4" 
+DEBUG_LEVEL     = "-g3"
+# COMPILER_OPTS   = "-mcpu=cortex-m7 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F746xx"
+# CFLAGS          = "-O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP"
+# MORE_FLAGS      = "-specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb"
+COMPILER_OPTS   = "-mcpu=cortex-m4 -std=gnu11 -g3 -DSTM32L4R9xx -DUSE_HAL_DRIVER -DBLUENRG1_NWK_COPROC -DSPI_INTERFACE -DARM_MATH_CM4"
+CFLAGS          = "-Os -ffunction-sections -Wall -fstack-usage -MMD -MP"
+MORE_FLAGS      = "--specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb"
+
+
+BUILD_DIR   = "build"
+FileUtils.mkdir_p "#{BUILD_DIR}/"
+TARGET      = "#{BUILD_DIR}/my_app"
+
+LINKERFILE = "STM32L4R9ZITx_FLASH.ld"
+
+ASM_OPTS    = "#{MCPU} #{DEBUG_LEVEL}"
+ARM_OPTS  = "-x assembler-with-cpp"
+
+##############################################
+## Ruby Tools on Docker
+##############################################
+require_relative "compiler_tools/RakeSupportFunctions"
+include RakeSupportFunctions
+
+##############################################
+## Building Process
+##############################################
+task :default => :binary
+
+rule '.obj' =>  '.c' do |task|
+    puts "#{BBlue}[Building C Object] #{task.name} #{Color_Off} \n"
+    quiet_sh "#{GCC} #{task.source}  #{COMPILER_OPTS} -c #{INCLUDE_LIBS_PATH} #{CFLAGS} -MF #{task.name.ext(".d")} -MT #{task.name.ext(".obj")} #{MORE_FLAGS} -o #{task.name} "
+end
+
+rule '.obj' => '.s' do |task|
+    puts "#{BBlue}[Building S Object] #{task.name} #{Color_Off} \n"
+    quiet_sh "#{GCC} #{ASM_OPTS} -c #{ARM_OPTS} -MMD -MP -MF #{task.name.ext(".d")} -MT #{task.name.ext(".obj")} #{MORE_FLAGS} -o #{task.name} #{task.source}"
+end
+
+##############################################
+## Building Process
+##############################################
+
+task :build => OBJECTS do
+    puts "#{BBlue}[Linking]#{Color_Off}\n"
+    quiet_sh "#{GCC} -o #{TARGET}.elf  #{OBJECTS}   -l:libarm_cortexM4lf_math.a -mcpu=cortex-m4 -T\"#{LINKERFILE}\"  --specs=nosys.specs -Wl,-Map=#{TARGET}.map -Wl,--gc-sections -static -Wl,--start-group -l:libarm_cortexM4lf_math.a -Wl,--end-group -LDrivers/CMSIS/Lib/GCC  -u_printf_float #{MORE_FLAGS} -Wl,--start-group -lc -lm -Wl,--end-group "
+end
+
+
+task :binary => :build do
+    puts "#{BBlue}[Creating Binary]#{Color_Off}\n"
+    sh "#{COMPILER_PREFIX}size #{TARGET}.elf"
+    sh "#{COMPILER_PREFIX}objdump  -h -S  #{TARGET}.elf > #{TARGET}.list"
+    sh "#{COMPILER_PREFIX}objcopy  -O binary  #{TARGET}.elf  #{TARGET}.bin"
+end
+
+##############################################
+## Flashing Process
+##############################################
+
+CLI_PATH="/home/me/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin"
+CLI="#{CLI_PATH}/STM32_Programmer_CLI "
+
+task :flash_swd => :binary do
+    quiet_sh "#{CLI}  -c port=swd freq=4000 -w #{TARGET}.bin 0x08004000 -rst" # Without bootloader
+end
+
+BOOTLOADER = "BootLoaderL4R9.bin"
+task :flash_bootloader_usb do
+    quiet_sh "sudo #{CLI}  -c port=usb1 -w #{BOOTLOADER} 0x08000000" # Bootloader
+end
+
+task :flash_usb => :binary do
+    quiet_sh "sudo #{CLI}  -c port=usb1 -w #{TARGET}.bin 0x08004000" # Without bootloader
+end
+
+CLEAN.include( "#{BUILD_DIR}","**/*.obj","**/*.o","**/*.su","**/*.d" )
+

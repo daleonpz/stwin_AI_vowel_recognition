@@ -65,7 +65,8 @@ CRC_HandleTypeDef hcrc;
 static ai_handle model = AI_HANDLE_NULL;
 
 AI_ALIGNED(32)
-static ai_float activations[AI_MODEL_DATA_ACTIVATIONS_SIZE];
+// static ai_float activations[AI_MODEL_DATA_ACTIVATIONS_SIZE];
+static ai_u8 activations[AI_MODEL_DATA_ACTIVATIONS_SIZE];
 AI_ALIGNED(32)
 static ai_float in_data[AI_MODEL_IN_1_SIZE];
 AI_ALIGNED(32)
@@ -191,39 +192,28 @@ static int aiAdquireAndProcessData(void *in_data)
     ai_float min[6] = {INT32_MAX, INT32_MAX, INT32_MAX, INT32_MAX, INT32_MAX, INT32_MAX};
     ai_float max[6] = {INT32_MIN, INT32_MIN, INT32_MIN, INT32_MIN, INT32_MIN, INT32_MIN};
 
-    for (int i = 0; i < TENSOR_INPUT_SIZE; i++) {
+//     _PRINTF("Adquiring data...\r\n");
+    for (int i = 0; i < TENSOR_INPUT_SIZE; i += 6) {
         const int index = (_ring_buffer_index + i*6) % RING_BUFFER_SIZE;
         const int32_t* value = &(_ring_buffer[index]);
 
-//         ((ai_float*)in_data)[i]     = (ai_float)(value[0]);
-//         ((ai_float*)in_data)[i + 1] = (ai_float)(value[1]);
-//         ((ai_float*)in_data)[i + 2] = (ai_float)(value[2]);
-//         ((ai_float*)in_data)[i + 3] = (ai_float)(value[3]);
-//         ((ai_float*)in_data)[i + 4] = (ai_float)(value[4]);
-//         ((ai_float*)in_data)[i + 5] = (ai_float)(value[5]);
-// 
         for (int j = 0; j < 6; j++) {
             data[i + j] = (ai_float)(value[j]);
             min[j] = MIN(min[j], (ai_float)(value[j]) );
             max[j] = MAX(max[j], (ai_float)(value[j]) );
         }
-//         min[0] = MIN(min[0], ((ai_float)value[0]));
-//         min[1] = MIN(min[1], ((ai_float)value[1]));
-//         min[2] = MIN(min[2], ((ai_float)value[2]));
-//         min[3] = MIN(min[3], ((ai_float)value[3]));
-//         min[4] = MIN(min[4], ((ai_float)value[4]));
-//         min[5] = MIN(min[5], ((ai_float)value[5]));
-
+//         _PRINTF("%ld %ld %ld %ld %ld %ld\r\n ", value[0], value[1], value[2], value[3], value[4], value[5]);
     }
 
-//     _PRINTF("-----------------------------\r\n");
 //     _PRINTF("min: %f %f %f %f %f %f \r\n", min[0], min[1], min[2], min[3], min[4], min[5]);
 //     _PRINTF("max: %f %f %f %f %f %f \r\n", max[0], max[1], max[2], max[3], max[4], max[5]);
     // normalize the float array
+//     _PRINTF("Normalizing data...\r\n");
     for (int i = 0; i < TENSOR_INPUT_SIZE; i += 6) {
         for (int j = 0; j < 6; j++) {
             data[i + j] = (data[i + j] - min[j]) / (max[j] - min[j]);
         }
+//         _PRINTF("%f %f %f %f %f %f\r\n ", data[i], data[i + 1], data[i + 2], data[i + 3], data[i + 4], data[i + 5]);
     }
 
     return 0;
@@ -345,7 +335,7 @@ int main(void)
     while (1)
     {
         
-        if (WAIT_N_SAMPLES == g_acc_counter){
+        if (WAIT_N_SAMPLES*3 == g_acc_counter){
             uint32_t tick_start  = 0;
             uint32_t tick_end    = 0;
             g_led_on ^= 1;
@@ -358,6 +348,7 @@ int main(void)
             tick_end    = HAL_GetTick();
             _PRINTF("inference time: %ld ms\r\n", tick_end - tick_start);
             aiPostProcessData(out_data);
+            _PRINTF("MOVE NOWWWW!!!!!!\r\n");
         }
 
         if (g_is_data_ready){

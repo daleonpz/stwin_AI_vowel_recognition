@@ -38,9 +38,7 @@
 
 /* Exported Variables -------------------------------------------------------------*/
 volatile uint32_t HCI_ProcessEvent=      0;
-volatile uint8_t FifoEnabled = 0;
-
-volatile uint32_t PredictiveMaintenance = 0;
+volatile uint8_t FifoEnabled = 1;
 
 uint32_t ConnectionBleStatus  =0;
 
@@ -56,7 +54,10 @@ uint8_t  NodeName[8];
 /* Private variables ---------------------------------------------------------*/
 uint16_t VibrationParam[11];
 
-#define  RING_BUFFER_SIZE  (4*6) /* 4 samples for each axis */
+#define RING_BUFFER_SIZE    (600*6) /* 4 samples for each axis */
+#define SAMPLES_PER_SEC     (1)   /* 1 sample per second */
+#define WAIT_N_SAMPLES      (FREQ_ACC_GYRO_MAG / SAMPLES_PER_SEC)  
+
 static int32_t _ring_buffer[RING_BUFFER_SIZE];
 static uint32_t _ring_buffer_index = 0;
 
@@ -68,18 +69,18 @@ MDM_knownGMD_t known_MetaData[]={
     {GMD_END    ,0}/* THIS MUST BE THE LAST ONE */
 };
 
-static volatile uint32_t SendAccGyroMag=        0;
 static volatile uint32_t t_stwin=               0;
 
 static volatile uint8_t  g_led_on           = 0;
-static volatile uint8_t  g_acc_counter      = 0;
+static volatile uint32_t g_acc_counter      = 0;
+static volatile uint8_t  g_is_data_ready    = 0;
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 
 static void InitTimers(void);
 static void InitPredictiveMaintenance(void);
 
-static void SendMotionData(void);
+static void ReadMotionData(void);
 
 static void Enable_Inertial_Timer(void);
 
@@ -111,30 +112,33 @@ static void ring_buffer_add(int32_t *data)
 static void ring_buffer_print_all(void)
 {
     int i;
+    _PRINTF("ring buffer: \r\n");
     for (i = 0; i < RING_BUFFER_SIZE; i++) {
         _PRINTF("%d ", _ring_buffer[i]);
     }
-    _PRINTF(" (ring buffer size: %d)", RING_BUFFER_SIZE);
+    _PRINTF("\r\n (ring buffer size: %d)\r\n", RING_BUFFER_SIZE);
+    _PRINTF(" index: %d\r\n", _ring_buffer_index);
 }
 
 
 static void ring_buffer_print_tail(void)
 {
-    _PRINTF("%d ", _ring_buffer[_ring_buffer_index]);
+    _PRINTF("%d \r\n", _ring_buffer[_ring_buffer_index]);
 }
 
 static void ring_buffer_print_head(void)
 {
-    _PRINTF("%d ", _ring_buffer[(_ring_buffer_index + 1) % RING_BUFFER_SIZE]);
+    _PRINTF("%d \r\n", _ring_buffer[(_ring_buffer_index + 1) % RING_BUFFER_SIZE]);
 }
 
 static void ring_buffer_print_last_n(int n)
 {
     int i;
-    _PRINTF("last %d: ", n);
+    _PRINTF("last %d: \r\n", n);
     for (i = 0; i < n; i++) {
         _PRINTF("%d ", _ring_buffer[(_ring_buffer_index - 1 - i) % RING_BUFFER_SIZE]);
     }
+    _PRINTF("\r\n");
 }
 
 static void ring_buffer_get_last_n(int n, int32_t *data)
@@ -179,17 +183,13 @@ int main(void)
 #elif defined (__GNUC__)
             " (STM32CubeIDE)\r\n"
 #endif
-            "\tSend Every %4dmS Temperature/Humidity/Pressure\r\n"
-            "\tSend Every %4dmS Acc/Gyro/Magneto\r\n"
-            "\tSend Every %4dmS dB noise\r\n\n",
+            "\tSend Every %4dmS Acc/Gyro/Magneto\r\n",
             HAL_GetHalVersion() >>24,
             (HAL_GetHalVersion() >>16)&0xFF,
             (HAL_GetHalVersion() >> 8)&0xFF,
             HAL_GetHalVersion()      &0xFF,
             __DATE__,__TIME__,
-            ALGO_PERIOD_ENV,
-            ALGO_PERIOD_ACC_GYRO_MAG,
-            ALGO_PERIOD_AUDIO_LEVEL);
+            ALGO_PERIOD_ACC_GYRO_MAG);
 
 
     HCI_TL_SPI_Reset();
@@ -203,21 +203,18 @@ int main(void)
     Enable_Inertial_Timer();   
 
     /* Infinite loop */
-    uint32_t num_samples_per_seconds = FREQ_ACC_GYRO_MAG / 200; // 200 samples per second 
-                                                                // that's the maximum frequency
     while (1)
     {
 
-        if (num_samples_per_seconds == g_acc_counter){
+        if (WAIT_N_SAMPLES == g_acc_counter){
             g_led_on ^= 1;
-            SendAccGyroMag = 1;
+            g_acc_counter = 0;
+            _PRINTF("RUNNING AI MODEL\r\n");
+
         }
 
-        if(SendAccGyroMag) {
-            SendMotionData();
-            _PRINTF("\r\n");
-            SendAccGyroMag  =   0;
-            g_acc_counter   =   0;
+        if (g_is_data_ready){
+            ReadMotionData();
         }
 
         if ( !g_led_on ) {
@@ -235,7 +232,7 @@ int main(void)
  * @param  None
  * @retval None
  */
-static void SendMotionData(void)
+static void ReadMotionData(void)
 {
     MOTION_SENSOR_Axes_t ACC_Value;
     MOTION_SENSOR_Axes_t GYR_Value;
@@ -261,7 +258,6 @@ static void SendMotionData(void)
     if(TargetBoardFeatures.AccSensorIsInit)
     {
         MOTION_SENSOR_GetAxes(ACCELERO_INSTANCE, MOTION_ACCELERO, &ACC_Value);
-        _PRINTF("%ld, %ld, %ld", ACC_Value.x, ACC_Value.y, ACC_Value.z);
         IMU_data[0] = ACC_Value.x;
         IMU_data[1] = ACC_Value.y;
         IMU_data[2] = ACC_Value.z;
@@ -271,13 +267,13 @@ static void SendMotionData(void)
     if(TargetBoardFeatures.GyroSensorIsInit)
     {
         MOTION_SENSOR_GetAxes(GYRO_INSTANCE,MOTION_GYRO, &GYR_Value);
-        _PRINTF(", %ld, %ld, %ld ", GYR_Value.x, GYR_Value.y, GYR_Value.z);;
         IMU_data[3] = GYR_Value.x;
         IMU_data[4] = GYR_Value.y;
         IMU_data[5] = GYR_Value.z;
     }
 
     ring_buffer_add(IMU_data);
+//     ring_buffer_print_all();
 
     /* Read the Magneto values */
     if(TargetBoardFeatures.MagSensorIsInit)
@@ -537,6 +533,12 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
         /* Set the Capture Compare Register value (for Acc/Gyro/Mag sensor) */
         __HAL_TIM_SET_COMPARE(&TimCCHandle, TIM_CHANNEL_3, (uhCapture + uhCCR3_Val));
         g_acc_counter++;
+        g_is_data_ready = 1;
+
+        if (g_acc_counter % 50 == 0) 
+        {
+            _PRINTF(" read %d daten\r\n", g_acc_counter);
+        }
     }
 
 }
@@ -623,36 +625,6 @@ void Error_Handler(void)
     /* User may add here some code to deal with this error */
     while(1){
     }
-}
-
-/**
- * @brief  Save vibration parameters values to memory
- * @param pAccelerometer_Parameters Pointer to Accelerometer parameter structure
- * @param pMotionSP_Parameters Pointer to Board parameter structure
- * @retval unsigned char Success/Not Success
- */
-unsigned char SaveVibrationParamToMemory(void)
-{
-    /* ReLoad the Vibration Parameters Values from RAM */
-    unsigned char Success=0;
-
-    VibrationParam[0]= CHECK_VIBRATION_PARAM;
-    VibrationParam[1]=  (uint16_t)AcceleroParams.AccOdr;
-    VibrationParam[2]=  (uint16_t)AcceleroParams.AccFifoBdr;
-    VibrationParam[3]=  (uint16_t)AcceleroParams.fs;
-    VibrationParam[4]=  (uint16_t)MotionSP_Parameters.FftSize;
-    VibrationParam[5]=  (uint16_t)MotionSP_Parameters.tau;
-    VibrationParam[6]=  (uint16_t)MotionSP_Parameters.window;
-    VibrationParam[7]=  (uint16_t)MotionSP_Parameters.td_type;
-    VibrationParam[8]=  (uint16_t)MotionSP_Parameters.tacq;
-    VibrationParam[9]=  (uint16_t)MotionSP_Parameters.FftOvl;
-    VibrationParam[10]= (uint16_t)MotionSP_Parameters.subrange_num;
-
-    PREDMNT1_PRINTF("Vibration parameters values will be saved in FLASH\r\n");
-    MDM_SaveGMD(GMD_VIBRATION_PARAM,(void *)VibrationParam);
-    NecessityToSaveMetaDataManager=1;
-
-    return Success;
 }
 
 /**

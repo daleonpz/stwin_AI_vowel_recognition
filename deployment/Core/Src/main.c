@@ -33,6 +33,7 @@
 #define SAMPLES_PER_SEC     (1)   /* 1 sample per second */
 #define WAIT_N_SAMPLES      (FREQ_ACC_GYRO_MAG / SAMPLES_PER_SEC)  
 #define TENSOR_INPUT_SIZE   (20*20*6)
+#define NUM_OF_SAMPLES      (TENSOR_INPUT_SIZE/ 6) /* 6 bytes per sample */
 #define INFERENCE_THRESHOLD (0.8)
 
 /* Imported Variables -------------------------------------------------------------*/
@@ -192,8 +193,8 @@ static int aiAdquireAndProcessData(void *in_data)
     ai_float min[6] = {INT32_MAX, INT32_MAX, INT32_MAX, INT32_MAX, INT32_MAX, INT32_MAX};
     ai_float max[6] = {INT32_MIN, INT32_MIN, INT32_MIN, INT32_MIN, INT32_MIN, INT32_MIN};
 
-//     _PRINTF("Adquiring data...\r\n");
-    for (int i = 0; i < TENSOR_INPUT_SIZE; i += 6) {
+    _PRINTF("Adquiring data...\r\n");
+    for (int i = 0; i < NUM_OF_SAMPLES; i ++) {
         const int index = (_ring_buffer_index + i*6) % RING_BUFFER_SIZE;
         const int32_t* value = &(_ring_buffer[index]);
 
@@ -202,16 +203,21 @@ static int aiAdquireAndProcessData(void *in_data)
             min[j] = MIN(min[j], (ai_float)(value[j]) );
             max[j] = MAX(max[j], (ai_float)(value[j]) );
         }
-//         _PRINTF("%ld %ld %ld %ld %ld %ld\r\n ", value[0], value[1], value[2], value[3], value[4], value[5]);
+        _PRINTF("[%i] %ld %ld %ld %ld %ld %ld\r\n ", i, value[0], value[1], value[2], value[3], value[4], value[5]);
     }
 
-//     _PRINTF("min: %f %f %f %f %f %f \r\n", min[0], min[1], min[2], min[3], min[4], min[5]);
-//     _PRINTF("max: %f %f %f %f %f %f \r\n", max[0], max[1], max[2], max[3], max[4], max[5]);
+    _PRINTF("min: %f %f %f %f %f %f \r\n", min[0], min[1], min[2], min[3], min[4], min[5]);
+    _PRINTF("max: %f %f %f %f %f %f \r\n", max[0], max[1], max[2], max[3], max[4], max[5]);
     // normalize the float array
 //     _PRINTF("Normalizing data...\r\n");
     for (int i = 0; i < TENSOR_INPUT_SIZE; i += 6) {
         for (int j = 0; j < 6; j++) {
-            data[i + j] = (data[i + j] - min[j]) / (max[j] - min[j]);
+            min_max = max[j] - min[j];
+            if (min_max == 0) {
+                data[i + j] = 0;
+            } else {
+                data[i + j] = (data[i + j] - min[j]) / min_max;
+            }
         }
 //         _PRINTF("%f %f %f %f %f %f\r\n ", data[i], data[i + 1], data[i + 2], data[i + 3], data[i + 4], data[i + 5]);
     }

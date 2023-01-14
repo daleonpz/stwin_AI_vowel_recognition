@@ -93,7 +93,7 @@ static volatile uint32_t t_stwin=               0;
 
 static volatile uint8_t  g_led_on           = 0;
 static volatile uint32_t g_acc_counter      = 0;
-static volatile uint8_t  g_is_data_ready    = 0;
+// static volatile uint8_t  g_is_data_ready    = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
@@ -126,11 +126,17 @@ static void ring_buffer_init(void)
 
 static void ring_buffer_add(int32_t *data)
 {
-    int i;
-    for (i = 0; i < 6; i++) {
-        _ring_buffer[_ring_buffer_index] = data[i];
-        _ring_buffer_index = (_ring_buffer_index + 1) % RING_BUFFER_SIZE;
+    for (int i = 0; i < 6; i++) {
+        _ring_buffer[_ring_buffer_index + i] = data[i];
     }
+//     _PRINTF("ring_buffer_add: %d %d %d %d %d %d , index: %d \r\n ", 
+//             _ring_buffer[_ring_buffer_index], _ring_buffer[_ring_buffer_index + 1], _ring_buffer[_ring_buffer_index + 2],
+//             _ring_buffer[_ring_buffer_index + 3], _ring_buffer[_ring_buffer_index + 4], _ring_buffer[_ring_buffer_index + 5],
+//             _ring_buffer_index);
+//     _PRINTF("%ld, %ld, %ld, %ld, %ld %ld\r\n",
+//             _ring_buffer[_ring_buffer_index], _ring_buffer[_ring_buffer_index + 1], _ring_buffer[_ring_buffer_index + 2],
+//             _ring_buffer[_ring_buffer_index + 3], _ring_buffer[_ring_buffer_index + 4], _ring_buffer[_ring_buffer_index + 5])
+    _ring_buffer_index = (_ring_buffer_index + 6) % RING_BUFFER_SIZE;
 }
 
 static void ring_buffer_print_all(void)
@@ -193,33 +199,42 @@ static int aiAdquireAndProcessData(void *in_data)
     ai_float min[6] = {INT32_MAX, INT32_MAX, INT32_MAX, INT32_MAX, INT32_MAX, INT32_MAX};
     ai_float max[6] = {INT32_MIN, INT32_MIN, INT32_MIN, INT32_MIN, INT32_MIN, INT32_MIN};
 
-    _PRINTF("Adquiring data...\r\n");
-    for (int i = 0; i < NUM_OF_SAMPLES; i ++) {
+//     _PRINTF("Adquiring data...\r\n");
+    for (int i = 0; i < NUM_OF_SAMPLES; i ++) 
+    {
         const int index = (_ring_buffer_index + i*6) % RING_BUFFER_SIZE;
         const int32_t* value = &(_ring_buffer[index]);
 
-        for (int j = 0; j < 6; j++) {
-            data[i + j] = (ai_float)(value[j]);
-            min[j] = MIN(min[j], (ai_float)(value[j]) );
-            max[j] = MAX(max[j], (ai_float)(value[j]) );
+        for (int j = 0; j < 6; j++) 
+        {
+            data[i*6 + j] = (ai_float)(value[j]);
+            min[j] = MIN(min[j], data[i*6 + j]);
+            max[j] = MAX(max[j], data[i*6 + j]);
         }
-        _PRINTF("[%i] %ld %ld %ld %ld %ld %ld\r\n ", i, value[0], value[1], value[2], value[3], value[4], value[5]);
+        
+        const int idx = i*6;
+//        _PRINTF("[> %i] %f %f %f %f %f %f\r\n ", i, data[idx], data[idx + 1], data[idx + 2], data[idx + 3], data[idx + 4], data[idx + 5]);
+//         _PRINTF("[%i] %ld %ld %ld %ld %ld %ld\r\n ", i, value[0], value[1], value[2], value[3], value[4], value[5]);
     }
 
-    _PRINTF("min: %f %f %f %f %f %f \r\n", min[0], min[1], min[2], min[3], min[4], min[5]);
-    _PRINTF("max: %f %f %f %f %f %f \r\n", max[0], max[1], max[2], max[3], max[4], max[5]);
+//     _PRINTF("min: %f %f %f %f %f %f \r\n", min[0], min[1], min[2], min[3], min[4], min[5]);
+//     _PRINTF("max: %f %f %f %f %f %f \r\n", max[0], max[1], max[2], max[3], max[4], max[5]);
+
     // normalize the float array
 //     _PRINTF("Normalizing data...\r\n");
-    for (int i = 0; i < TENSOR_INPUT_SIZE; i += 6) {
-        for (int j = 0; j < 6; j++) {
-            min_max = max[j] - min[j];
-            if (min_max == 0) {
-                data[i + j] = 0;
+    for (int i = 0; i < NUM_OF_SAMPLES; i ++) 
+    {
+        const int idx = i*6;
+        for (int j = 0; j < 6; j++) 
+        {
+            ai_float max_min = max[j] - min[j];
+            if (max_min == 0) {
+                data[idx + j] = 0;
             } else {
-                data[i + j] = (data[i + j] - min[j]) / min_max;
+                data[idx + j] = (data[idx + j] - min[j]) / max_min;
             }
         }
-//         _PRINTF("%f %f %f %f %f %f\r\n ", data[i], data[i + 1], data[i + 2], data[i + 3], data[i + 4], data[i + 5]);
+//         _PRINTF("[> %i] %f %f %f %f %f %f\r\n ", i, data[idx], data[idx + 1], data[idx + 2], data[idx + 3], data[idx + 4], data[idx + 5]);
     }
 
     return 0;
@@ -305,24 +320,24 @@ int main(void)
     /* Check the MetaDataManager */
     InitMetaDataManager((void *)&known_MetaData,MDM_DATA_TYPE_GMD,NULL); 
 
-    _PRINTF("\n\t(HAL %ld.%ld.%ld_%ld)\r\n"
-            "\tCompiled %s %s"
-
-#if defined (__IAR_SYSTEMS_ICC__)
-            " (IAR)\r\n"
-#elif defined (__CC_ARM)
-            " (KEIL)\r\n"
-#elif defined (__GNUC__)
-            " (STM32CubeIDE)\r\n"
-#endif
-            "\tSend Every %4dmS Acc/Gyro/Magneto\r\n",
-            HAL_GetHalVersion() >>24,
-            (HAL_GetHalVersion() >>16)&0xFF,
-            (HAL_GetHalVersion() >> 8)&0xFF,
-            HAL_GetHalVersion()      &0xFF,
-            __DATE__,__TIME__,
-            ALGO_PERIOD_ACC_GYRO_MAG);
-
+//     _PRINTF("\n\t(HAL %ld.%ld.%ld_%ld)\r\n"
+//             "\tCompiled %s %s"
+// 
+// #if defined (__IAR_SYSTEMS_ICC__)
+//             " (IAR)\r\n"
+// #elif defined (__CC_ARM)
+//             " (KEIL)\r\n"
+// #elif defined (__GNUC__)
+//             " (STM32CubeIDE)\r\n"
+// #endif
+//             "\tSend Every %4dmS Acc/Gyro/Magneto\r\n",
+//             HAL_GetHalVersion() >>24,
+//             (HAL_GetHalVersion() >>16)&0xFF,
+//             (HAL_GetHalVersion() >> 8)&0xFF,
+//             HAL_GetHalVersion()      &0xFF,
+//             __DATE__,__TIME__,
+//             ALGO_PERIOD_ACC_GYRO_MAG);
+// 
 
     HCI_TL_SPI_Reset();
 
@@ -357,9 +372,9 @@ int main(void)
             _PRINTF("MOVE NOWWWW!!!!!!\r\n");
         }
 
-        if (g_is_data_ready){
-            ReadMotionData();
-        }
+//         if (g_is_data_ready){
+//             ReadMotionData();
+//         }
 
         if ( !g_led_on ) {
            LedOnTargetPlatform();
@@ -684,13 +699,8 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
         /* Set the Capture Compare Register value (for Acc/Gyro/Mag sensor) */
         __HAL_TIM_SET_COMPARE(&TimCCHandle, TIM_CHANNEL_3, (uhCapture + uhCCR3_Val));
         g_acc_counter++;
-        g_is_data_ready = 1;
-
-//         if (g_acc_counter % 50 == 0) 
-//         {
-//             _PRINTF(" read %lu daten\r\n", g_acc_counter);
-//             _PRINTF(" %d \r\n", WAIT_N_SAMPLES);
-//         }
+//         g_is_data_ready = 1;
+        ReadMotionData();
     }
 
 }

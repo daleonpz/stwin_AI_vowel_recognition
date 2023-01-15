@@ -38,12 +38,6 @@
 
 /* Imported Variables -------------------------------------------------------------*/
 
-//#ifdef PREDMNT1_ENABLE_PRINTF
-//extern TIM_HandleTypeDef  TimHandle;
-//extern void CDC_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
-//#endif /* PREDMNT1_ENABLE_PRINTF */
-
-
 /* Exported Variables -------------------------------------------------------------*/
 volatile uint32_t HCI_ProcessEvent=      0;
 volatile uint8_t FifoEnabled = 1;
@@ -129,10 +123,6 @@ static void ring_buffer_add(int32_t *data)
     for (int i = 0; i < 6; i++) {
         _ring_buffer[_ring_buffer_index + i] = data[i];
     }
-//     _PRINTF("ring_buffer_add: %d %d %d %d %d %d , index: %d \r\n ", 
-//             _ring_buffer[_ring_buffer_index], _ring_buffer[_ring_buffer_index + 1], _ring_buffer[_ring_buffer_index + 2],
-//             _ring_buffer[_ring_buffer_index + 3], _ring_buffer[_ring_buffer_index + 4], _ring_buffer[_ring_buffer_index + 5],
-//             _ring_buffer_index);
 //     _PRINTF("%ld, %ld, %ld, %ld, %ld %ld\r\n",
 //             _ring_buffer[_ring_buffer_index], _ring_buffer[_ring_buffer_index + 1], _ring_buffer[_ring_buffer_index + 2],
 //             _ring_buffer[_ring_buffer_index + 3], _ring_buffer[_ring_buffer_index + 4], _ring_buffer[_ring_buffer_index + 5])
@@ -212,9 +202,8 @@ static int aiAdquireAndProcessData(void *in_data)
             max[j] = MAX(max[j], data[i*6 + j]);
         }
         
-        const int idx = i*6;
+//         const int idx = i*6;
 //        _PRINTF("[> %i] %f %f %f %f %f %f\r\n ", i, data[idx], data[idx + 1], data[idx + 2], data[idx + 3], data[idx + 4], data[idx + 5]);
-//         _PRINTF("[%i] %ld %ld %ld %ld %ld %ld\r\n ", i, value[0], value[1], value[2], value[3], value[4], value[5]);
     }
 
 //     _PRINTF("min: %f %f %f %f %f %f \r\n", min[0], min[1], min[2], min[3], min[4], min[5]);
@@ -304,8 +293,6 @@ int main(void)
 
     HAL_PWREx_EnableVddIO2();
     __HAL_RCC_PWR_CLK_ENABLE();
-  /* The STM32 CRC IP clock should be enabled to use the network runtime library */
-//     __HAL_RCC_CRS_CLK_ENABLE();
     HAL_PWREx_EnableVddUSB();
 
     /* Configure the System clock */
@@ -315,38 +302,36 @@ int main(void)
 
     t_stwin = HAL_GetTick();
 
+  /* The STM32 CRC IP clock should be enabled to use the network runtime library */
     MX_CRC_Init();
 
     /* Check the MetaDataManager */
     InitMetaDataManager((void *)&known_MetaData,MDM_DATA_TYPE_GMD,NULL); 
 
-//     _PRINTF("\n\t(HAL %ld.%ld.%ld_%ld)\r\n"
-//             "\tCompiled %s %s"
-// 
-// #if defined (__IAR_SYSTEMS_ICC__)
-//             " (IAR)\r\n"
-// #elif defined (__CC_ARM)
-//             " (KEIL)\r\n"
-// #elif defined (__GNUC__)
-//             " (STM32CubeIDE)\r\n"
-// #endif
-//             "\tSend Every %4dmS Acc/Gyro/Magneto\r\n",
-//             HAL_GetHalVersion() >>24,
-//             (HAL_GetHalVersion() >>16)&0xFF,
-//             (HAL_GetHalVersion() >> 8)&0xFF,
-//             HAL_GetHalVersion()      &0xFF,
-//             __DATE__,__TIME__,
-//             ALGO_PERIOD_ACC_GYRO_MAG);
-// 
+    _PRINTF("\n\t(HAL %ld.%ld.%ld_%ld)\r\n"
+            "\tCompiled %s %s"
+
+#if defined (__IAR_SYSTEMS_ICC__)
+            " (IAR)\r\n"
+#elif defined (__CC_ARM)
+            " (KEIL)\r\n"
+#elif defined (__GNUC__)
+            " (STM32CubeIDE)\r\n"
+#endif
+            "\tSend Every %4dmS Acc/Gyro/Magneto\r\n",
+            HAL_GetHalVersion() >>24,
+            (HAL_GetHalVersion() >>16)&0xFF,
+            (HAL_GetHalVersion() >> 8)&0xFF,
+            HAL_GetHalVersion()      &0xFF,
+            __DATE__,__TIME__,
+            ALGO_PERIOD_ACC_GYRO_MAG);
+
 
     HCI_TL_SPI_Reset();
 
     /* initialize timers */
     InitTimers();
 
-    /* Predictive Maintenance Initialization */
-//     InitPredictiveMaintenance();
-    
     aiInit();
     ring_buffer_init();
 

@@ -5,8 +5,14 @@ Workflow overview:
 
 ![Project Workflow](/docs/_images/workflow.png)
 
+## Used tools
+- Pytorch 1.10.2+cu102
+- ONNIX-tensorflow 1.10.0
+- STM32 CUBE-AI 7.1.0
+- Sensor ISM330DHCX
+- 18.04.1-Ubuntu
 
-## Problem definition 
+# Problem definition 
 
 The vowel recognition is a classification problem. I defined the following constrains, context and architecture for this particular problem.
 
@@ -21,8 +27,10 @@ The vowel recognition is a classification problem. I defined the following const
 * Loss function: Cross Entropy, which is typical in multiclass classification. 
 
 
-##  Data collection and preparation
-I collected data from the ISM330DHCX sensor at a sampling rate of 200Hz, and decided to collect data from the accelerometer and gyroscope, because it has been proven that using multiple sensors improves gesture characterization. [1](https://www.mdpi.com/1424-8220/21/17/5713), [2](https://www.mdpi.com/2076-3417/10/18/6507), [3](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6603535/).
+#  Data collection and preparation
+I collected **200 samples for each class**, each sample corresponds to **2sec** of data from the **ISM330DHCX sensor** at a **sampling rate of 200Hz**, and decided to collect data from the accelerometer and gyroscope, because it has been proven that using multiple sensors improves gesture characterization. [1](https://www.mdpi.com/1424-8220/21/17/5713), [2](https://www.mdpi.com/2076-3417/10/18/6507), [3](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6603535/).
+
+![Class pattern](/docs/_images/vowels_pattern.png)
 
 That means that each data sample have the following form. $s^T = [ a_x, a_y, a_z, g_x, g_y, g_z]$, where $a_i$ and $g_i$ are the accelerometer and gyroscope measurements along i-axis. 
 
@@ -59,6 +67,15 @@ It was shown in [4](https://arxiv.org/vc/arxiv/papers/1803/1803.09052v1.pdf) tha
 ![Input image](/docs/_images/input.png)
 
 
+For the data collection I wrote some python scripts and C code for the microcontroller. All the relevant code for the data collection can be found [here](/datacollector).  The main script is [collect.sh](/datacollector/pythonscripts/collect.sh), where I defined the labels for each class. 
+
+
+# Neural Network Architecture
+
+I tried two architectures, both based on Convolution neural and fully connected networks. The papers I used as a reference are the following:
+- Jianjie, Lu & Raymond, Tong. (2018). Encoding Accelerometer Signals as Images for Activity Recognition Using Residual Neural Network. 
+- Jiang, Yujian & Song, Lin & Zhang, Junming & Song, Yang & Yan, Ming. (2022). Multi-Category Gesture Recognition Modeling Based on sEMG and IMU Signals. Sensors. 22. 5855. 10.3390/s22155855. 
+- 
 
 
 

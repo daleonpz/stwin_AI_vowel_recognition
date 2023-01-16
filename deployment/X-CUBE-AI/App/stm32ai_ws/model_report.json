@@ -12,12 +12,12 @@
         "factor": null,
         "layers": {}
     },
-    "date_time": "Fri Jan 13 20:50:56 2023",
+    "date_time": "Mon Jan 16 21:43:38 2023",
     "error": 0,
     "error_str": [],
     "exec_cmd": "generate",
     "exec_duration": 0.0,
-    "hash": "90a229c1150941d5287056359126c448",
+    "hash": "9753aca2e3815a75aa643a4d6cd5977d",
     "inputs": [
         "input"
     ],
@@ -25,8 +25,8 @@
         {
             "extras": {
                 "n_macc": 0,
-                "n_params": 4800,
-                "psize": 19200,
+                "n_params": 19200,
+                "psize": 76800,
                 "rom_size": 0
             },
             "id": 7,
@@ -37,8 +37,8 @@
         {
             "extras": {
                 "n_macc": 0,
-                "n_params": 8,
-                "psize": 32,
+                "n_params": 32,
+                "psize": 128,
                 "rom_size": 0
             },
             "id": 7,
@@ -49,8 +49,8 @@
         {
             "extras": {
                 "n_macc": 0,
-                "n_params": 16,
-                "psize": 64,
+                "n_params": 160,
+                "psize": 640,
                 "rom_size": 0
             },
             "id": 9,
@@ -61,8 +61,8 @@
         {
             "extras": {
                 "n_macc": 0,
-                "n_params": 2,
-                "psize": 8,
+                "n_params": 5,
+                "psize": 20,
                 "rom_size": 0
             },
             "id": 9,
@@ -117,7 +117,7 @@
             "inputs": [
                 "input"
             ],
-            "name": "_conv1_conv1_0_Conv_output_0",
+            "name": "node_9",
             "type": "Conv2D"
         },
         {
@@ -129,9 +129,9 @@
             },
             "id": 1,
             "inputs": [
-                "_conv1_conv1_0_Conv_output_0"
+                "node_9"
             ],
-            "name": "_conv1_conv1_1_Relu_output_0",
+            "name": "node_10",
             "type": "Nonlinearity"
         },
         {
@@ -143,9 +143,9 @@
             },
             "id": 2,
             "inputs": [
-                "_conv1_conv1_1_Relu_output_0"
+                "node_10"
             ],
-            "name": "_pool1_MaxPool_output_0",
+            "name": "node_11",
             "type": "Pool"
         },
         {
@@ -169,9 +169,9 @@
             },
             "id": 3,
             "inputs": [
-                "_pool1_MaxPool_output_0"
+                "node_11"
             ],
-            "name": "_conv2_conv2_0_Conv_output_0",
+            "name": "node_12",
             "type": "Conv2D"
         },
         {
@@ -183,9 +183,9 @@
             },
             "id": 4,
             "inputs": [
-                "_conv2_conv2_0_Conv_output_0"
+                "node_12"
             ],
-            "name": "_conv2_conv2_1_Relu_output_0",
+            "name": "node_13",
             "type": "Nonlinearity"
         },
         {
@@ -197,9 +197,9 @@
             },
             "id": 5,
             "inputs": [
-                "_conv2_conv2_1_Relu_output_0"
+                "node_13"
             ],
-            "name": "_pool2_MaxPool_output_0",
+            "name": "node_14",
             "type": "Pool"
         },
         {
@@ -211,53 +211,53 @@
             },
             "id": 6,
             "inputs": [
-                "_pool2_MaxPool_output_0"
+                "node_14"
             ],
-            "name": "_fc_Reshape_output_0",
+            "name": "node_20",
             "type": "Reshape"
         },
         {
             "extras": {
-                "n_macc": 4808,
+                "n_macc": 19232,
                 "n_params": 0,
                 "psize": 0,
                 "rom_output": {
-                    "c_size": 32,
+                    "c_size": 128,
                     "fmt": {
                         "format": "float"
                     },
                     "shape": [
                         1,
                         1,
-                        8,
+                        32,
                         1
                     ]
                 },
-                "rom_size": 19232
+                "rom_size": 76928
             },
             "id": 7,
             "inputs": [
-                "_fc_Reshape_output_0",
+                "node_20",
                 "fc_layers_0_weight",
                 "fc_layers_0_bias"
             ],
-            "name": "_fc_layers_layers_0_Gemm_output_0",
+            "name": "node_21",
             "type": "Gemm"
         },
         {
             "extras": {
-                "n_macc": 8,
+                "n_macc": 32,
                 "n_params": 0,
                 "psize": 0,
                 "rom_output": {
-                    "c_size": 32,
+                    "c_size": 128,
                     "fmt": {
                         "format": "float"
                     },
                     "shape": [
                         1,
                         1,
-                        8,
+                        32,
                         1
                     ]
                 },
@@ -265,53 +265,53 @@
             },
             "id": 8,
             "inputs": [
-                "_fc_layers_layers_0_Gemm_output_0"
+                "node_21"
             ],
-            "name": "_fc_layers_layers_1_Relu_output_0",
+            "name": "node_22",
             "type": "Nonlinearity"
         },
         {
             "extras": {
-                "n_macc": 18,
+                "n_macc": 165,
                 "n_params": 0,
                 "psize": 0,
                 "rom_output": {
-                    "c_size": 8,
+                    "c_size": 20,
                     "fmt": {
                         "format": "float"
                     },
                     "shape": [
                         1,
                         1,
-                        2,
+                        5,
                         1
                     ]
                 },
-                "rom_size": 72
+                "rom_size": 660
             },
             "id": 9,
             "inputs": [
-                "_fc_layers_layers_1_Relu_output_0",
+                "node_22",
                 "fc_layers_2_weight",
                 "fc_layers_2_bias"
             ],
-            "name": "_fc_layers_layers_2_Gemm_output_0",
+            "name": "node_23",
             "type": "Gemm"
         },
         {
             "extras": {
-                "n_macc": 30,
+                "n_macc": 75,
                 "n_params": 0,
                 "psize": 0,
                 "rom_output": {
-                    "c_size": 8,
+                    "c_size": 20,
                     "fmt": {
                         "format": "float"
                     },
                     "shape": [
                         1,
                         1,
-                        2,
+                        5,
                         1
                     ]
                 },
@@ -319,7 +319,7 @@
             },
             "id": 10,
             "inputs": [
-                "_fc_layers_layers_2_Gemm_output_0"
+                "node_23"
             ],
             "name": "output",
             "type": "Nonlinearity"
@@ -328,9 +328,9 @@
     "model_files": [
         "/home/me/Documents/git/mystuff/tinyml/stwin_AI_vowel_detection/trainer/results/model.onnx"
     ],
-    "model_n_params": 8102,
+    "model_n_params": 22673,
     "model_name": "model",
-    "model_size": 32408,
+    "model_size": 90692,
     "model_type": "onnx",
     "name": "model",
     "outputs": [
@@ -338,7 +338,7 @@
     ],
     "ram_io_size": [
         9600,
-        8
+        20
     ],
     "ram_size": [
         12624,
@@ -354,15 +354,15 @@
             "name": "input"
         }
     ],
-    "rom_n_macc": 537700,
+    "rom_n_macc": 552340,
     "rom_outputs": [
         {
-            "c_size": 8,
+            "c_size": 20,
             "c_type": "float",
             "name": "output"
         }
     ],
-    "rom_size": 32408,
+    "rom_size": 90692,
     "strategy": "heap_overlay",
     "tools_api_version": {
         "major": 1,

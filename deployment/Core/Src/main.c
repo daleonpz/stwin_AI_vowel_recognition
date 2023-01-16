@@ -238,6 +238,9 @@ static int aiPostProcessData(void *out_data)
     _PRINTF("inference data: \r\n");
     _PRINTF("%f \r\n", data[0]);
     _PRINTF("%f \r\n", data[1]);
+    _PRINTF("%f \r\n", data[2]);
+    _PRINTF("%f \r\n", data[3]);
+    _PRINTF("%f \r\n", data[4]);
 
     // find the max value
     ai_float max = INT32_MIN;

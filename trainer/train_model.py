@@ -1,4 +1,4 @@
-from modules.dataset import CustomDataset
+from modules.dataset import * 
 from modules.train   import *
 from modules.utils   import *
 from models.cnn_2    import CNN
@@ -20,6 +20,25 @@ import seaborn as sns
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+def export_model_to_onnx(model):
+    model.eval()
+    # Fuse some modules. it may save on memory access, make the model run faster, and improve its accuracy.
+    # https://pytorch.org/tutorials/recipes/fuse.html
+    torch.quantization.fuse_modules(model,
+                                    [['conv1', 'bn1','relu1'], 
+                                     ['conv2', 'bn2','relu2']],
+                                    inplace=True)
+
+    # Convert to ONNX. 
+    # Explanation on why we need a dummy input
+    # https://github.com/onnx/tutorials/issues/158
+    dummy_input = torch.randn(1, 6, 20, 20) 
+    torch.onnx.export(model,
+                      dummy_input, 
+                      'results/model.onnx', 
+                      input_names=['input'], 
+                      output_names=['output'])
+
 def test(model, test_loader, device, criterion):
     test_loss, test_acc = validate(model, 
               criterion=criterion,
@@ -31,19 +50,19 @@ def get_confusion_matrix(model, test_loader, device, criterion):
     y_pred = []
     y_true = []
 
+
     with torch.no_grad():
         for data in test_loader:
             test_data, test_labels = (
                 data[0].to(DEVICE, dtype=torch.float32),
                 data[1].to(DEVICE),
             )
-
-        pred = model(test_data)
-        print(f'pred: {100*pred.float()}')
-        pred = pred.argmax(dim=1)
-        for i in range(len(pred)):
-            y_true.append(test_labels[i].item())
-            y_pred.append(pred[i].item())
+            pred = model(test_data)
+#             print(f'pred: {100*pred.float()}')
+            pred = pred.argmax(dim=1)
+            for i in range(len(pred)):
+                y_true.append(test_labels[i].item())
+                y_pred.append(pred[i].item())
 
     print(f'true_labels {y_true}')
     print(f'pred_labels {y_pred}')
@@ -106,8 +125,7 @@ def main(dataset_path, num_epochs=10, batch_size=16, learning_rate=0.00001):
 
     ## Pre tranining config
     dataset = CustomDataset(dataset_path, labels_map)
-
-    model     = CNN(fc_num_output=5, fc_hidden_size=[8]).to(DEVICE)
+    model     = CNN(fc_num_output=5, fc_hidden_size=[32]).to(DEVICE)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     criterion = nn.CrossEntropyLoss()
 
@@ -116,7 +134,6 @@ def main(dataset_path, num_epochs=10, batch_size=16, learning_rate=0.00001):
     train_loader  = DataLoader(train_ds, batch_size = batch_size, shuffle=True)
     val_loader    = DataLoader(val_ds,   batch_size = batch_size, shuffle=False)
     test_loader   = DataLoader(test_ds,  batch_size = batch_size, shuffle=False)
-
 
     dict_log = train(model, 
                      optimizer = optimizer,
@@ -136,6 +153,8 @@ def main(dataset_path, num_epochs=10, batch_size=16, learning_rate=0.00001):
     test(model, test_loader, DEVICE, criterion)
 
     torch.save(model.state_dict(), 'results/model.pth')
+
+    export_model_to_onnx(model) 
 
 if __name__ == '__main__':
     print(f'Using device: {DEVICE}')

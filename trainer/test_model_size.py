@@ -20,13 +20,7 @@ def main():
     logging.getLogger('modules.train').setLevel(logging.DEBUG)
     logging.getLogger('modules.utils').setLevel(logging.DEBUG)
 
-    labels_map = {"A": 0, "E": 1}
-    rev_labels_map = {v: k for k, v in labels_map.items()}
-
-    dataset_path = '../data'
-    dataset = CustomDataset(dataset_path, labels_map)
-
-    model = CNN(fc_hidden_size=[8]).to(DEVICE)
+    model = CNN(fc_num_output=5, fc_hidden_size=[8]).to(DEVICE)
     param_size = 0
     buffer_size = 0
     size_datatype_in_bytes = 4 #float32
@@ -37,7 +31,7 @@ def main():
     for buffer in model.buffers():
         buffer_size += buffer.nelement() * buffer.element_size()
 
-    size_all_kb = (param_size + buffer_size) * size_datatype_in_bytes / 1024
+    size_all_kb = (param_size + buffer_size)/ 1024
 
     if( size_all_kb > 500 ):
         print("\nNAMED PARAMS")

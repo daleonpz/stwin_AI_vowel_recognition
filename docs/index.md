@@ -183,7 +183,7 @@ drwxrwxr-x 2 me me   4096 13.01.2023 22:56 stm32ai_ws/
 ## C Implementation Details
 For the deployment the following modules were required:
 
-- Ring buffer of size $600*6$, because the sampling rate of the sensor is 200Hz and each sample is 2 seconds that means I needed at least an array of $(200*2*6)$ elements.
+- Ring buffer of size 600x6, because the sampling rate of the sensor is 200Hz and each sample is 2 seconds that means I needed at least an array of (200x2x6) elements.
 - Normalization of the samples between (0,1) before feeding the model.
 - Inference module with a threshold to detect the vowels. I set the threshold at 0.8. 
 

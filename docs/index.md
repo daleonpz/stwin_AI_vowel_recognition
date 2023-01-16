@@ -3,7 +3,7 @@ The objective of this project was to train a neural network your **vowel recogni
 
 Workflow overview:
 
-![Project Workflow](/_images/workflow.png)
+![Project Workflow](/docs/_images/workflow.png)
 
 
 ## Problem definition 
@@ -24,7 +24,7 @@ The vowel recognition is a classification problem. I defined the following const
 ##  Data collection and preparation
 I collected data from the ISM330DHCX sensor at a sampling rate of 200Hz, and decided to collect data from the accelerometer and gyroscope, because it has been proven that using multiple sensors improves gesture characterization. [1](https://www.mdpi.com/1424-8220/21/17/5713), [2](https://www.mdpi.com/2076-3417/10/18/6507), [3](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6603535/).
 
-That means that each data sample have the following form.  $ s^T = [ a_x, a_y, a_z, g_x, g_y, g_z] $
+That means that each data sample have the following form. $s^T = [ a_x, a_y, a_z, g_x, g_y, g_z]$
 
 
 

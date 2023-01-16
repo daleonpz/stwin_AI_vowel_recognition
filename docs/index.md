@@ -54,10 +54,9 @@ Thus the normalized feature matrix $\mathbf{F_n}$ is defined as follows:
 \mathbf{F_n} = \begin{bmatrix} \mathbf{f_n(1)} & \mathbf{f_n(2)} & \mathbf{f_n(3)} &\mathbf{f_n(4)} & \mathbf{f_n(5)} & \mathbf{f_n(6)}  \end{bmatrix}
 ``` 
 
-It was shown in [4](https://arxiv.org/vc/arxiv/papers/1803/1803.09052v1.pdf) that encoding feature vectors or matrices as images could take advantage of the great performance of CNN on images.
+It was shown in [4](https://arxiv.org/vc/arxiv/papers/1803/1803.09052v1.pdf) that encoding feature vectors or matrices as images could take advantage of the great performance of CNN on images. Thus the shape of input image $\mathbf{I_f}$ is 20x20x6. 
 
-
-
+![Input image](/docs/_images/input.png)
 
 
 

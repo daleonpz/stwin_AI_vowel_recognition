@@ -76,14 +76,15 @@ I tried two architectures, both based on Convolution neural and fully connected 
 - Jianjie, Lu & Raymond, Tong. (2018). Encoding Accelerometer Signals as Images for Activity Recognition Using Residual Neural Network. 
 - Jiang, Yujian & Song, Lin & Zhang, Junming & Song, Yang & Yan, Ming. (2022). Multi-Category Gesture Recognition Modeling Based on sEMG and IMU Signals. Sensors. 22. 5855. 10.3390/s22155855. 
 
+## First architecture
 The first architecture was the following. 
 ![first architecture](/docs/_images/CNN1.png)
 
 * Number of parameters: 
-   * Conv2D + Batch + ReLU: $24*6*3*3 + 24 + 24 +24  = 1368$
-   * Conv2D + Batch + ReLU: $48*24*3*3 + 48 + 48 + 48 = 10512$
-   * FC + ReLU:  $512*4800 + 512  = 2458112$
-   * FC + ReLU:  $512*32 + 32  = 16416$
+   * Conv2D + Batch + ReLU: $24*6*3*3 + 24 + 24 + 24 + 0 = 1368$
+   * Conv2D + Batch + ReLU: $48*24*3*3 + 48 + 48 + 48 + 0 = 10512$
+   * FC + ReLU:  $512*4800 + 512 + 0 = 2458112$
+   * FC + ReLU:  $512*32 + 32 + 0 = 16416$
    * FC:    $5*32 + 5 = 165$
    * Total number of parameters: 2486573 
 
@@ -102,9 +103,23 @@ Here are the results:
 
 As you can see, the accuracy in all datasets (train, validation and test) is above 90%. Which is a good indication. I also plotted the curves "Accuracy vs epoch" and "Loss vs epoch" as well as the "confusion matrix" which validates that the initial model can perfom well, I show them only for the next model, because this one was not deployed.
 
-The second one was the following. 
+## Model 
+The model I ended up deploying is the following
 ![Architecture](/docs/_images/CNN2.png)
 
+* Number of parameters: 
+   * Conv2D + Batch + ReLU: $12*6*3*3 + 12 + 12 + 12 + 0  = 684$
+   * Conv2D + Batch + ReLU: $24*12*3*3 + 24 + 24 + 24 + 0 = 2664$
+   * FC + ReLU:  $8*600 + 8 + 0 = 4808$
+   * FC:    $5*8 + 5 = 45$
+   * Total number of parameters: 32804 
+
+* Number of elements per parameter: 4 (float)
+* Size of the model:  $32804 * 4 = 32.332 KB$ 
+
+This model is small enough to be deployed on the microcontroller, it uses only 1.58% of the available flash memory.
+
+![Results](/docs/_images/results.png)
 
 
 

@@ -69,11 +69,14 @@ class CustomDataset(Dataset):
 if __name__ == '__main__':
     labels_map = {
         "A": 0,
-        "E": 1
+        "E": 1,
+        "I": 2,
+        "O": 3,
+        "U": 4
     }
     rev_labels_map = {v: k for k, v in labels_map.items()}
 
-    dataset_path = "/home/me/Documents/git/mystuff/tinyml/stwin_AI_vocals_detection/data"
+    dataset_path = "/home/me/Documents/git/mystuff/tinyml/stwin_AI_vowel_detection/data"
     dataset = CustomDataset(dataset_path, labels_map)
 
     print(f'Number of samples: {len(dataset)}')

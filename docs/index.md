@@ -75,7 +75,37 @@ For the data collection I wrote some python scripts and C code for the microcont
 I tried two architectures, both based on Convolution neural and fully connected networks. The papers I used as a reference are the following:
 - Jianjie, Lu & Raymond, Tong. (2018). Encoding Accelerometer Signals as Images for Activity Recognition Using Residual Neural Network. 
 - Jiang, Yujian & Song, Lin & Zhang, Junming & Song, Yang & Yan, Ming. (2022). Multi-Category Gesture Recognition Modeling Based on sEMG and IMU Signals. Sensors. 22. 5855. 10.3390/s22155855. 
-- 
+
+The first architecture was the following. 
+![first architecture](/docs/_images/CNN1.png)
+
+* Number of parameters: 
+   * Conv2D + Batch + ReLU: $24*6*3*3 + 24 + 24 +24  = 1368$
+   * Conv2D + Batch + ReLU: $48*24*3*3 + 48 + 48 + 48 = 10512$
+   * FC + ReLU:  $512*4800 + 512  = 2458112$
+   * FC + ReLU:  $512*32 + 32  = 16416$
+   * FC:    $5*32 + 5 = 165$
+   * Total number of parameters: 2486573 
+
+* Number of elements per parameter: 4 (float)
+* Size of the model:  $2486573 * 4 = 9713.754 KB = 9.48 MB$ 
+
+As you can see, the model size is too big 9.48 MB for the STWINK devboard, which has ARM Cortex-M4 MCU with 2048 kbytes of flash. But I still trained the model to see if I go in a good direction.
+
+Here are the results:
+
+| Model        | n_samples | num_epochs | learning_rate | criterion    | optimizer | batch_size | train_acc | train_loss | val_acc | val_loss | test_acc | test_loss | size(float32) |
+| ------------ | --------- | ---------- | ------------- | ------------ | --------- | ---------- | --------- | ---------- | ------- | -------- | -------- | --------- | ------------- |
+| cnn (512,32) | 200       | 10         | 0.00001       | CrossEntropy | Adam      | 16         | 91.67     | 0.514      | 83.33   | 0.544    | 82.5     | 0.5727    | 9MB           |
+| cnn (512,32) | 200       | 50         | 0.00001       | CrossEntropy | Adam      | 16         | 100       | 0.328      | 95      | 0.376    | 97.5     | 0.3458    | 9MB           |
+| cnn (512,32) | 200       | 20         | 0.00001       | CrossEntropy | Adam      | 16         | 96.67     | 0.402      | 86.67   | 0.469    | 92.5     | 0.4352    | 9MB           |
+
+As you can see, the accuracy in all datasets (train, validation and test) is above 90%. Which is a good indication. I also plotted the curves "Accuracy vs epoch" and "Loss vs epoch" as well as the "confusion matrix" which validates that the initial model can perfom well, I show them only for the next model, because this one was not deployed.
+
+The second one was the following. 
+![Architecture](/docs/_images/CNN2.png)
+
+
 
 
 

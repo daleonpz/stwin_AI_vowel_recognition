@@ -119,7 +119,65 @@ The model I ended up deploying is the following
 
 This model is small enough to be deployed on the microcontroller, it uses only 1.58% of the available flash memory.
 
+The results of training are shown below: 
+
 ![Results](/docs/_images/results.png)
+
+The overall performance above 90%. 
+
+For the training I wrote some python scripts and C code for the microcontroller. All the relevant code for the data collection can be found [here](/trainer).  Run `python3 train_model.py  --dataset_path ../data --num_epochs 200` to train the model. 
+
+# Deployment on the microcontroller
+The CUBE-AI tool from STMicroelectronics doesn't support pytorch models, so I had two options. Either train the whole model again in tensorflow and then export it to tensorflow lite, or use convert the pytorch model to ONNX (Open Neural Network Exchange). I chose the latter.
+
+To export from pytorch to ONNX is straighforward:
+
+```python
+from models.cnn_2    import CNN
+
+# Load pytorch model
+loadedmodel     = CNN(fc_num_output=5, fc_hidden_size=[8]).to(DEVICE) # my model
+loadedmodel.load_state_dict(torch.load('results/model.pth')
+loadedmodel.eval()
+
+# Fuse some modules. it may save on memory access, make the model run faster, and improve its accuracy.
+# https://pytorch.org/tutorials/recipes/fuse.html
+torch.quantization.fuse_modules(loadedmodel,
+                                [['conv1', 'bn1','relu1'], 
+                                 ['conv2', 'bn2','relu2']],
+                                inplace=True)
+
+# Convert to ONNX. 
+# Explanation on why we need a dummy input
+# https://github.com/onnx/tutorials/issues/158
+dummy_input = torch.randn(1, 6, 20, 20) 
+torch.onnx.export(loadedmodel,
+                  dummy_input, 
+                  'model.onnx', 
+                  input_names=['input'], 
+                  output_names=['output'])
+
+```
+
+Once the the model is exported in ONNX format, it's time to import it into cube ai 7.1.0. STM has a CLI tool `stm32ai` that import the ONNX model and generate the corresponding C files. 
+
+```sh
+$ stm32ai generate -m <model_path>/model.onnx --type onnx -o <output_dir> --name <project>
+```
+I wrote a script for that, here is the [link](/trainer/create_C_files_for_stm32.sh).  The script generates the following files:
+
+```sh
+$  ll
+drwxrwxr-x 2 me me   4096 13.01.2023 22:56 stm32ai_ws/
+-rw-rw-r-- 1 me me  24356 13.01.2023 22:56 model.c
+-rw-rw-r-- 1 me me   1500 13.01.2023 22:56 model_config.h
+-rw-rw-r-- 1 me me  90718 13.01.2023 22:56 model_data.c
+-rw-rw-r-- 1 me me   2624 13.01.2023 22:56 model_data.h
+-rw-rw-r-- 1 me me  17926 13.01.2023 22:56 model_generate_report.txt
+-rw-rw-r-- 1 me me   8766 13.01.2023 22:56 model.h
+```
+
+[Here](/docs/embedded_client_api.html) you can find the documentation of the API for the CUBE-AI framework. 
 
 
 

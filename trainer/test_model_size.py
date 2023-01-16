@@ -20,7 +20,7 @@ def main():
     logging.getLogger('modules.train').setLevel(logging.DEBUG)
     logging.getLogger('modules.utils').setLevel(logging.DEBUG)
 
-    model = CNN(fc_num_output=5, fc_hidden_size=[8]).to(DEVICE)
+    model = CNN(fc_num_output=5, fc_hidden_size=[32]).to(DEVICE)
     param_size = 0
     buffer_size = 0
     size_datatype_in_bytes = 4 #float32

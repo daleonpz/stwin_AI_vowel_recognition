@@ -1,5 +1,5 @@
 # Introduction
-The objective of this project was to train a neural network your **vowel recognition** based on **Inertial Movement Unit (IMU)** inputs, and deploy the trained network on the devboard [STEVAL-STWINKT1](https://www.st.com/en/evaluation-tools/steval-stwinkt1.html) from STM32.
+The objective of this project was to train a neural network your **vowel recognition** based on **Inertial Movement Unit (IMU)** inputs and deploy the trained network on the dev board [STEVAL-STWINKT1](https://www.st.com/en/evaluation-tools/steval-stwinkt1.html) from STM32.
 
 Workflow overview:
 
@@ -28,7 +28,7 @@ The vowel recognition is a classification problem. I defined the following const
 
 
 #  Data collection and preparation
-I collected **200 samples for each class**, each sample corresponds to **2sec** of data from the **ISM330DHCX sensor** at a **sampling rate of 200Hz**, and decided to collect data from the accelerometer and gyroscope, because it has been proven that using multiple sensors improves gesture characterization. [1](https://www.mdpi.com/1424-8220/21/17/5713), [2](https://www.mdpi.com/2076-3417/10/18/6507), [3](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6603535/).
+I collected **200 samples for each class** and each sample corresponds to **2sec** of data from the **ISM330DHCX sensor** at a **sampling rate of 200Hz**. I decided to collect data from the accelerometer and gyroscope, because it has been proven that using multiple sensors improves gesture characterization. [1](https://www.mdpi.com/1424-8220/21/17/5713), [2](https://www.mdpi.com/2076-3417/10/18/6507), [3](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6603535/).
 
 ![Class pattern](/docs/_images/vowels_pattern.png)
 
@@ -50,7 +50,7 @@ such that
 ```
 
 
-Before inputting data into the model, I conducted the normalization operation. Since the IMU signals differ in value and range, thus I normalize each the IMU signal $\mathbf{f_i}$ between (1, 0) with function following function.
+Before inputting data into the model, I conducted the normalization operation. Since the IMU signals differ in value and range, thus I normalize each signal $\mathbf{f_i}$ between (1, 0) with the following function.
 
 ```math
 \mathbf{f_n(i)} = \frac{\mathbf{f_i} -\min\mathbf{f_i} }{\max\mathbf{f_i} - \min\mathbf{f_i}}, i = 1,2,\cdots ,6
@@ -62,17 +62,17 @@ Thus the normalized feature matrix $\mathbf{F_n}$ is defined as follows:
 \mathbf{F_n} = \begin{bmatrix} \mathbf{f_n(1)} & \mathbf{f_n(2)} & \mathbf{f_n(3)} &\mathbf{f_n(4)} & \mathbf{f_n(5)} & \mathbf{f_n(6)}  \end{bmatrix}
 ``` 
 
-It was shown in [4](https://arxiv.org/vc/arxiv/papers/1803/1803.09052v1.pdf) that encoding feature vectors or matrices as images could take advantage of the great performance of CNN on images. Thus the shape of input image $\mathbf{I_f}$ is 20x20x6. 
+[4](https://arxiv.org/vc/arxiv/papers/1803/1803.09052v1.pdf) showed that encoding feature vectors or matrices as images could take advantage of the performance of CNN on images. Thus the shape of input image $\mathbf{I_f}$ is 20x20x6. 
 
 ![Input image](/docs/_images/input.png)
 
 
-For the data collection I wrote some python scripts and C code for the microcontroller. All the relevant code for the data collection can be found [here](/datacollector).  The main script is [collect.sh](/datacollector/pythonscripts/collect.sh), where I defined the labels for each class. 
+For the data collection I wrote some python scripts and C code for the microcontroller. All the relevant code for this task can be found [here](/datacollector).  The main script is [collect.sh](/datacollector/pythonscripts/collect.sh), where I defined the labels for each class. 
 
 
 # Neural Network Architecture
 
-I tried two architectures, both based on Convolution neural and fully connected networks. The papers I used as a reference are the following:
+I tried two architectures based on Convolution neural and fully connected networks. The papers I used as a reference are the following:
 - Jianjie, Lu & Raymond, Tong. (2018). Encoding Accelerometer Signals as Images for Activity Recognition Using Residual Neural Network. 
 - Jiang, Yujian & Song, Lin & Zhang, Junming & Song, Yang & Yan, Ming. (2022). Multi-Category Gesture Recognition Modeling Based on sEMG and IMU Signals. Sensors. 22. 5855. 10.3390/s22155855. 
 
@@ -91,7 +91,7 @@ The first architecture was the following.
 * Number of elements per parameter: 4 (float)
 * Size of the model:  $2486573 * 4 = 9713.754 KB = 9.48 MB$ 
 
-As you can see, the model size is too big 9.48 MB for the STWINK devboard, which has ARM Cortex-M4 MCU with 2048 kbytes of flash. But I still trained the model to see if I go in a good direction.
+As you can see, the model size is too big 9.48 MB for the STWINK devboard, which has ARM Cortex-M4 MCU with 2048 kbytes of flash. But I still trained the model to see if I was on a right direction.
 
 Here are the results:
 
@@ -101,7 +101,7 @@ Here are the results:
 | cnn (512,32) | 200       | 50         | 0.00001       | CrossEntropy | Adam      | 16         | 100       | 0.328      | 95      | 0.376    | 97.5     | 0.3458    | 9MB           |
 | cnn (512,32) | 200       | 20         | 0.00001       | CrossEntropy | Adam      | 16         | 96.67     | 0.402      | 86.67   | 0.469    | 92.5     | 0.4352    | 9MB           |
 
-As you can see, the accuracy in all datasets (train, validation and test) is above 90%. Which is a good indication. I also plotted the curves "Accuracy vs epoch" and "Loss vs epoch" as well as the "confusion matrix" which validates that the initial model can perfom well, I show them only for the next model, because this one was not deployed.
+As you can see, the accuracy in all datasets (train, validation and test) is above 90% which is a good indication. Although I plotted the curves "Accuracy vs epoch" and "Loss vs epoch", as well as the "confusion matrix" that validate performance of this model, I do not shown them because this model was not deployed.
 
 ## Model 
 The model I ended up deploying is the following
@@ -119,16 +119,16 @@ The model I ended up deploying is the following
 
 This model is small enough to be deployed on the microcontroller, it uses only 1.58% of the available flash memory.
 
-The results of training are shown below: 
+The results of training are the following:
 
 ![Results](/docs/_images/results.png)
 
-The overall performance above 90%. 
+The overall performance is above 90%. 
 
-For the training I wrote some python scripts and C code for the microcontroller. All the relevant code for the data collection can be found [here](/trainer).  Run `python3 train_model.py  --dataset_path ../data --num_epochs 200` to train the model. 
+For the training I wrote python scripts and C files for the microcontroller. All the relevant code for this task can be found [here](/trainer).  Run `python3 train_model.py  --dataset_path ../data --num_epochs 200` to train the model. 
 
 # Deployment on the microcontroller
-The CUBE-AI tool from STMicroelectronics doesn't support pytorch models, so I had two options. Either train the whole model again in tensorflow and then export it to tensorflow lite, or use convert the pytorch model to ONNX (Open Neural Network Exchange). I chose the latter.
+The CUBE-AI tool from STMicroelectronics doesn't support pytorch models, so I had two options. Either train the whole model again in tensorflow and then export it to tensorflow lite, or convert the pytorch model to ONNX (Open Neural Network Exchange). I chose the latter.
 
 To export from pytorch to ONNX is straighforward:
 
@@ -159,12 +159,12 @@ torch.onnx.export(loadedmodel,
 
 ```
 
-Once the the model is exported in ONNX format, it's time to import it into cube ai 7.1.0. STM has a CLI tool `stm32ai` that import the ONNX model and generate the corresponding C files. 
+Once the the model is exported in ONNX format, it's time to import it into cube ai 7.1.0. STM has a CLI tool `stm32ai` that imports the ONNX model and generates the corresponding C files. 
 
 ```sh
 $ stm32ai generate -m <model_path>/model.onnx --type onnx -o <output_dir> --name <project>
 ```
-I wrote a script for that, here is the [link](/trainer/create_C_files_for_stm32.sh).  The script generates the following files:
+I wrote a script for that ([link](/trainer/create_C_files_for_stm32.sh)).  The script generates the following files:
 
 ```sh
 $  ll

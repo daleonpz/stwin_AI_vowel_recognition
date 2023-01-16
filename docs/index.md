@@ -177,8 +177,20 @@ drwxrwxr-x 2 me me   4096 13.01.2023 22:56 stm32ai_ws/
 -rw-rw-r-- 1 me me   8766 13.01.2023 22:56 model.h
 ```
 
-[Here](/docs/embedded_client_api.html) you can find the documentation of the API for the CUBE-AI framework. 
+[Here](/docs/embedded_client_api.html) you can find the documentation in HTML of the API for the CUBE-AI framework. 
 
+
+## C Implementation Details
+For the deployment the following modules were required:
+
+- Ring buffer of size $600*6$, because the sampling rate of the sensor is 200Hz and each sample is 2 seconds that means I needed at least an array of $(200*2*6)$ elements.
+- Normalization of the samples between (0,1) before feeding the model.
+- Inference module with a threshold to detect the vowels. I set the threshold at 0.8. 
+
+Since the model is small and the quantization model from Pytorch is not as good as from Tensorflow, I decide to use floats for my inference. In the future, I would build a quantized model using tensorflow and see how it performs. 
+
+# Results
+   
 
 
 

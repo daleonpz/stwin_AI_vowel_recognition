@@ -1,18 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def normalize_columns_between_0_and_1(matrix):
-    print(matrix.shape)
-    mmin = np.min(matrix, axis=0)
-    mmax = np.max(matrix, axis=0)
-    matrix = matrix - mmin
-    matrix = matrix / (mmax - mmin)
-    return matrix
-
-
 data = np.loadtxt('raw_lecture.csv')
-
-data = normalize_columns_between_0_and_1(data)
 
 acc = data[:, 0:3]
 gyro = data[:, 3:6]
@@ -34,17 +23,16 @@ ngyro = ndata_image[:,:,3:6]
 fig, axes = plt.subplots(1, 4)
 
 
-axes[0].set_title('Axis X')
-axes[1].set_title('Axis Y')
-axes[2].set_title('Axis Z')
-axes[3].set_title('Created Image')
-
+axes[0].set_title('Acc')
+axes[1].set_title('Acc Image')
+axes[2].set_title('Gyro')
+axes[3].set_title('Gyro Image')
 
 # plot data
-axes[0].plot(acc[:, 0])
-axes[1].plot(acc[:, 1])
-axes[2].plot(acc[:, 2])
-axes[3].imshow(nacc)
+axes[0].plot(acc)
+axes[1].imshow(nacc)
+axes[2].plot(gyro)
+axes[3].imshow(ngyro)
     
 plt.show()
 

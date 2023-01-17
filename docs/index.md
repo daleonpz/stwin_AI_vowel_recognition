@@ -137,7 +137,7 @@ from models.cnn_2    import CNN
 
 # Load pytorch model
 loadedmodel     = CNN(fc_num_output=5, fc_hidden_size=[8]).to(DEVICE) # my model
-loadedmodel.load_state_dict(torch.load('results/model.pth')
+loadedmodel.load_state_dict(torch.load('results/model.pth'))
 loadedmodel.eval()
 
 # Fuse some modules. it may save on memory access, make the model run faster, and improve its accuracy.

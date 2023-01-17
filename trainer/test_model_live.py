@@ -99,6 +99,7 @@ def main(port, baud, sample_freq):
     num_classes = len(labels_map)
     # load model from file pytorch
     model = get_model(num_classes, DEVICE)
+    print(model)
     model.load_state_dict(torch.load('results/model.pth'))
     model.eval()
 

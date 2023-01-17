@@ -5,9 +5,9 @@ import torch.nn.functional as F
 import torch.optim as optim
 import logging
 
-from models.cnn      import CNN
+# from models.cnn      import CNN
 # from models.cnn_2    import CNN
-# from models.model    import CNN
+from models.model    import CNN
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,8 @@ def get_labels_map():
     return labels_map
 
 def get_model(num_classes, device):
-    model     = CNN(fc_num_output=num_classes).to(device)
+#     model     = CNN(fc_num_output=num_classes).to(device) # from cnn, most complicated model -> performs well
+    model   = CNN(num_classes).to(device) # from model with global average pooling
     logger.info(f'Defined Model: {model}')
     return model
 ###########################################################

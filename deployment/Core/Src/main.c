@@ -60,8 +60,8 @@ CRC_HandleTypeDef hcrc;
 static ai_handle model = AI_HANDLE_NULL;
 
 AI_ALIGNED(32)
-// static ai_float activations[AI_MODEL_DATA_ACTIVATIONS_SIZE];
-static ai_u8 activations[AI_MODEL_DATA_ACTIVATIONS_SIZE];
+static ai_float activations[AI_MODEL_DATA_ACTIVATIONS_SIZE];
+// static ai_u64 activations[AI_MODEL_DATA_ACTIVATIONS_SIZE];
 AI_ALIGNED(32)
 static ai_float in_data[AI_MODEL_IN_1_SIZE];
 AI_ALIGNED(32)

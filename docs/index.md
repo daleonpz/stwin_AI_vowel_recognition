@@ -53,7 +53,23 @@ such that
 Before inputting data into the model, I conducted the normalization operation. Since the IMU signals differ in value and range, thus I normalize each signal $\mathbf{f_i}$ between (1, 0) with the following function.
 
 ```math
-\mathbf{f_n(i)} = \frac{\mathbf{f_i} -\min\mathbf{f_i} }{\max\mathbf{f_i} - \min\mathbf{f_i}}, i = 1,2,\cdots ,6
+\mathbf{f_n(i)} = \frac{\mathbf{f_i} - a_{min}}{  a_{max} - a_{min} }, i = 1,2,3
+```
+```math
+\mathbf{f_n(i)} = \frac{\mathbf{f_i} - g_{min}}{  g_{max} - g_{min} }, i = 4,5,6
+```
+where
+```math
+a_{min} = \min_{ a_i \in \{ \mathbf{a_x}, \mathbf{a_y},\mathbf{a_z} \} } a_i^{(j)} , j = 1,\cdots , 200 \\
+```
+```math
+a_{max} = \max_{ a_i \in \{ \mathbf{a_x}, \mathbf{a_y},\mathbf{a_z} \} } a_i^{(j)} , j = 1,\cdots , 200 \\
+```
+```math
+g_{min} = \min_{ a_i \in \{ \mathbf{a_x}, \mathbf{a_y},\mathbf{a_z} \} } a_i^{(j)} , j = 1,\cdots , 200 \\ 
+```
+```math
+g_{max} = \max_{ a_i \in \{ \mathbf{a_x}, \mathbf{a_y},\mathbf{a_z} \} } a_i^{(j)} , j = 1,\cdots , 200
 ```
 
 Thus the normalized feature matrix $\mathbf{F_n}$ is defined as follows: 

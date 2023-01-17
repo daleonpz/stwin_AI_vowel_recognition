@@ -1,6 +1,20 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+def get_min_max(data):
+    acc = data[:, 0:3]
+    gyro = data[:, 3:6]
+
+    flat_acc = acc.flatten()
+    flat_gyro = gyro.flatten()
+
+    mmin_acc = np.min(flat_acc)
+    mmax_acc = np.max(flat_acc)
+    mmin_gyro = np.min(flat_gyro)
+    mmax_gyro = np.max(flat_gyro)
+
+    return mmin_acc, mmax_acc, mmin_gyro, mmax_gyro
+
 data_int = np.loadtxt('raw_int.csv')
 data_float = np.loadtxt('raw_float.csv')
 
@@ -20,10 +34,11 @@ print(f'Euclidean distance between ai_float and tofloat(int): {dist}')
 data_mixed = np.loadtxt('min_max.csv')
 
 # find the min and max of the data per column
-min_max = np.array([data_mixed.min(axis=0), data_mixed.max(axis=0)])
+mmin_acc, mmax_acc, mmin_gyro, mmax_gyro = get_min_max(data_mixed)
 
-measurement = np.array([[245.000000, -203.000000, -397.000000 ,24780.000000 ,-94150.000000 ,104090.000000 ],
-                    [546.000000, -108.000000, 950.000000 ,202720.000000 ,72170.000000 ,163870.000000 ]])
+min_max = np.array([mmin_acc, mmin_gyro, mmax_acc, mmax_gyro])
+
+measurement = np.array([ -1002.000000,  -353010.000000,  1998.000000, 419090.000000])
 
 print(f'Testing function to get max and min of a measurement')
 dist = np.linalg.norm(measurement.flatten() - min_max.flatten())
@@ -34,14 +49,25 @@ obs_norm_data = np.loadtxt('norm.csv')
 
 ref_norm_data = np.zeros((400,6))
 
-def normalize_columns_between_0_and_1(matrix):
-    mmin = np.min(matrix, axis=0)
-    mmax = np.max(matrix, axis=0)
-    matrix = matrix - mmin
-    matrix = matrix / (mmax - mmin)
-    return matrix
+def normalize_acc_gyro(data):
+    acc = data[:, 0:3]
+    gyro = data[:, 3:6]
 
-ref_norm_data = normalize_columns_between_0_and_1(data_mixed)
+    mmin_acc, mmax_acc, mmin_gyro, mmax_gyro = get_min_max(data)
+
+    acc = acc - mmin_acc
+    acc = acc / (mmax_acc - mmin_acc)
+
+    gyro = gyro - mmin_gyro
+    gyro = gyro / (mmax_gyro - mmin_gyro)
+
+    data[:, 0:3] = acc
+    data[:, 3:6] = gyro
+
+    return data
+
+
+ref_norm_data = normalize_acc_gyro(data_mixed)
 
 print(f'Testing function to normalize data')
 dist = np.linalg.norm(ref_norm_data.flatten() - obs_norm_data.flatten())

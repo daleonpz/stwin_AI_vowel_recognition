@@ -126,14 +126,14 @@ The model I ended up deploying is the following
 * Number of parameters: 
    * Conv2D + Batch + ReLU: $12*6*3*3 + 12 + 12 + 12 + 0  = 684$
    * Conv2D + Batch + ReLU: $24*12*3*3 + 24 + 24 + 24 + 0 = 2664$
-   * FC + ReLU:  $8*600 + 8 + 0 = 4808$
-   * FC:    $5*8 + 5 = 45$
-   * Total number of parameters: 32804 
+   * Global Average Pooling:  $0$. With this layer I could reduce the number of parameters and code size
+   * FC:    $5*24 + 5 = 125$
+   * Total number of parameters: 3473 
 
 * Number of elements per parameter: 4 (float)
-* Size of the model:  $32804 * 4 = 32.332 KB$ 
+* Size of the model:  $3473 * 4 = 13.863 KB$ 
 
-This model is small enough to be deployed on the microcontroller, it uses only 1.58% of the available flash memory.
+This model is small enough to be deployed on the microcontroller, it uses only 0.68% of the available flash memory.
 
 The results of training are the following:
 
@@ -213,7 +213,70 @@ The C code can be found under [deployment](/deployment). The main is defined in 
 
 
 # Results
-   
+Here are the results of the inference on the microcontroller.  
+  
+```sh
+
+Welcome to minicom 2.7.1
+
+OPTIONS: I18n
+Compiled on Aug 13 2017, 15:25:34.
+Port /dev/ttyACM0, 19:45:52
+
+Press CTRL-A Z for help on special keys
 
 
+        (HAL 1.13.0_0)
+        Compiled Jan 17 2023 19:34:40 (STM32CubeIDE)
+        Send Every    5mS Acc/Gyro/Magneto
+system clock ----> 120000000
+Testing label: 0
+model output:
+0.966853
+0.004895
+0.027935
+0.000016
+0.000300
+inference result: 0
+gesture: A
+Testing label: 1
+model output:
+0.000000
+0.999976
+0.000006
+0.000018
+0.000000
+inference result: 1
+gesture: E
+Testing label: 2
+model output:
+0.001132
+0.000371
+0.990676
+0.000235
+0.007587
+inference result: 2
+gesture: I
+Testing label: 3
+model output:
+0.000021
+0.007765
+0.000039
+0.990865
+0.001310
+inference result: 3
+gesture: O
+Testing label: 4
+model output:
+0.000081
+0.000070
+0.000067
+0.005766
+0.994015
+model result: 4
+gesture: U
+```
+
+# TODO
+I still having troubles with the timing between sensor reading and model inference. For that reason, I wanted to make sure that the inference on the microcontroller works, so I fed the model with some samples (`ai float` arrays) from the Testset and run the inference, which was successful.  
 

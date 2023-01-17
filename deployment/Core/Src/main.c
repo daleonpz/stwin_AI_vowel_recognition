@@ -267,12 +267,11 @@ static int aiPostProcessData(void *out_data)
     
     // print float array
     _PRINTF("inference data: \r\n");
-    _PRINTF("%f \r\n", data[0]);
-    _PRINTF("%f \r\n", data[1]);
-    _PRINTF("%f \r\n", data[2]);
-    _PRINTF("%f \r\n", data[3]);
-    _PRINTF("%f \r\n", data[4]);
-
+    for(int i=0; i < AI_MODEL_OUT_1_SIZE; i++)
+    {
+        _PRINTF("%f \r\n", data[i]);
+    }
+    
     // find the max value
     ai_float max = INT32_MIN;
     int max_index = 0;

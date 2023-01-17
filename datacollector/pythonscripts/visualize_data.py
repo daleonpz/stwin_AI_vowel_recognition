@@ -12,6 +12,29 @@ def normalize_columns_between_0_and_1(matrix):
     return matrix
 
 
+def normalize_acc_gyro(data):
+    acc = data[:, 0:3]
+    gyro = data[:, 3:6]
+
+    flat_acc = acc.flatten()
+    flat_gyro = gyro.flatten()
+
+    mmin_acc = np.min(flat_acc)
+    mmax_acc = np.max(flat_acc)
+    mmin_gyro = np.min(flat_gyro)
+    mmax_gyro = np.max(flat_gyro)
+
+    acc = acc - mmin_acc
+    acc = acc / (mmax_acc - mmin_acc)
+
+    gyro = gyro - mmin_gyro
+    gyro = gyro / (mmax_gyro - mmin_gyro)
+
+    data[:, 0:3] = acc
+    data[:, 3:6] = gyro
+
+    return data
+
 
 def main(argv):
     # read data from argument
@@ -27,15 +50,16 @@ def main(argv):
     files = np.random.choice(files, number_of_files, replace=False)
 
     # create a subplot row for each file
-    fig, axes = plt.subplots(number_of_files, 4)
+    fig, axes = plt.subplots(number_of_files, 5)
 
 
     fig.suptitle(f'{path}', fontsize=16)
-    axes[0, 0].set_title('Axis X')
-    axes[0, 1].set_title('Axis Y')
-    axes[0, 2].set_title('Axis Z')
-    axes[0, 3].set_title('Created Image')
-
+    axes[0, 0].set_title('Accelerometer original')
+    axes[0, 1].set_title('Accelerometer normalized')
+    axes[0, 2].set_title('Accelerometer image')
+    axes[0, 3].set_title('Gyro normalized')
+    axes[0, 4].set_title('Gyro Image')
+    
     for i, file in enumerate(files):
         # read data
         print(f'Reading file {file}')
@@ -44,8 +68,8 @@ def main(argv):
         acc = data[:, 0:3]
         gyro = data[:, 3:6]
 
-        ndata = normalize_columns_between_0_and_1(data)
-
+        ndata = normalize_acc_gyro(data)
+        
         # 3-rd dimension are [acc_x, acc_y, acc_z, gyro_x, gyro_y, gyro_z]
         ndata_image = np.zeros((6, img_size, img_size))
         for j in range(6):
@@ -62,10 +86,11 @@ def main(argv):
 
 
         # plot data
-        axes[i][0].plot(acc[:, 0])
-        axes[i][1].plot(acc[:, 1])
-        axes[i][2].plot(acc[:, 2])
-        axes[i][3].imshow(nacc)
+        axes[i][0].plot(acc)
+        axes[i][1].plot(ndata[:, 0:3])
+        axes[i][2].imshow(nacc)
+        axes[i][3].plot(ndata[:, 3:6])
+        axes[i][4].imshow(ngyro)
     
     plt.show()
 

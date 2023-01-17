@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-data = np.loadtxt('raw_lecture.csv')
+data = np.loadtxt('norm.csv')
 
 acc = data[:, 0:3]
 gyro = data[:, 3:6]
@@ -12,7 +12,6 @@ for j in range(6):
         img[j, :, :] = data[:, j].reshape(20, 20)
 
 print(img.shape) 
-print(img[:,0,0])
 ndata_image = np.transpose(img, (1, 2, 0))
 print(ndata_image.shape)
 

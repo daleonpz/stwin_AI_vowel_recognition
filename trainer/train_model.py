@@ -20,6 +20,9 @@ import seaborn as sns
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+logging.basicConfig(level=logging.DEBUG)
+logging.root.setLevel(logging.NOTSET)
+
 def export_model_to_onnx(model):
     model.eval()
     # Fuse some modules. it may save on memory access, make the model run faster, and improve its accuracy.
@@ -120,6 +123,7 @@ def main(dataset_path, num_epochs=10, batch_size=16, learning_rate=0.00001):
     logging.getLogger('models.cnn_2').setLevel(logging.INFO)
     logging.getLogger('modules.dataset').setLevel(logging.INFO)
     logging.getLogger('modules.train').setLevel(logging.INFO)
+    logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
     labels_map= {"A": 0, "E": 1, "I": 2, "O": 3, "U": 4}
 

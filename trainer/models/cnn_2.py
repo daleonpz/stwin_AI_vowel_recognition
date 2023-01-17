@@ -35,17 +35,14 @@ class CNN(nn.Module):
         x = self.bn1(x)
         x = self.relu1(x)
         x = self.pool1(x)
-        logger.debug("CNN model: conv1 output shape: %s" % str(x.shape))
 
         x = self.conv2(x)
         x = self.bn2(x)
         x = self.relu2(x)
         x = self.pool2(x)
-        logger.debug("CNN model: conv2 output shape: %s" % str(x.shape))
 
         x = self.fc(x)
         x = self.softmax(x)
-        logger.debug("CNN model: FC output shape: %s" % str(x.shape))
 
         return x
 

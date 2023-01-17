@@ -27,10 +27,10 @@ def export_model_to_onnx(model):
     model.eval()
     # Fuse some modules. it may save on memory access, make the model run faster, and improve its accuracy.
     # https://pytorch.org/tutorials/recipes/fuse.html
-    torch.quantization.fuse_modules(model,
-                                    [['conv1','relu1'], 
-                                     ['conv2','relu2']],
-                                    inplace=True)
+#     torch.quantization.fuse_modules(model,
+#                                     [['conv1','relu1'], 
+#                                      ['conv2','relu2']],
+#                                     inplace=True)
 #     torch.quantization.fuse_modules(model,
 #                                     [['conv1', 'bn1','relu1'], 
 #                                      ['conv2', 'bn2','relu2']],
@@ -63,11 +63,19 @@ def get_confusion_matrix(model, test_loader, device, criterion):
                 data[0].to(DEVICE, dtype=torch.float32),
                 data[1].to(DEVICE),
             )
+            # save tensor to csv separated by comma
+            print(test_data.shape)
+            print(test_labels.shape)
             pred = model(test_data)
             pred = pred.argmax(dim=1)
             for i in range(len(pred)):
                 y_true.append(test_labels[i].item())
                 y_pred.append(pred[i].item())
+
+                if test_labels[i].item() == pred[i].item():
+                    _temp = test_data[i].cpu().numpy()
+                    _temp = np.reshape(_temp, (400, 6))
+                    np.savetxt(f'correct_{test_labels[i].item()}.csv', _temp, delimiter=',')
 
     print(f'true_labels {y_true}')
     print(f'pred_labels {y_pred}')

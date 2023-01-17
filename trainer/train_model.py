@@ -1,7 +1,7 @@
 from modules.dataset import * 
 from modules.train   import *
 from modules.utils   import *
-from models.cnn_2    import CNN
+
 
 import argparse
 import logging
@@ -57,7 +57,6 @@ def get_confusion_matrix(model, test_loader, device, criterion):
     y_pred = []
     y_true = []
 
-
     with torch.no_grad():
         for data in test_loader:
             test_data, test_labels = (
@@ -65,7 +64,6 @@ def get_confusion_matrix(model, test_loader, device, criterion):
                 data[1].to(DEVICE),
             )
             pred = model(test_data)
-#             print(f'pred: {100*pred.float()}')
             pred = pred.argmax(dim=1)
             for i in range(len(pred)):
                 y_true.append(test_labels[i].item())
@@ -124,20 +122,25 @@ def plot_results(cm, dict_log, epochs, len):
 
 
 def main(dataset_path, num_epochs=10, batch_size=16, learning_rate=0.00001):
-    logging.getLogger('models.cnn_2').setLevel(logging.INFO)
+    logging.getLogger('models.cnn').setLevel(logging.INFO)
+#     logging.getLogger('models.cnn_2').setLevel(logging.DEBUG)
     logging.getLogger('modules.dataset').setLevel(logging.INFO)
     logging.getLogger('modules.train').setLevel(logging.INFO)
+    logging.getLogger('modules.utils').setLevel(logging.INFO)
     logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
-    labels_map= {"A": 0, "E": 1, "I": 2, "O": 3, "U": 4}
+
+    labels_map = get_labels_map()
+    NUM_CLASSES = len(labels_map)
 
     ## Pre tranining config
     dataset = CustomDataset(dataset_path, labels_map)
-    model     = CNN(fc_num_output=5, fc_hidden_size=[]).to(DEVICE)
+
+    model = get_model(NUM_CLASSES, DEVICE)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     criterion = nn.CrossEntropyLoss()
 
-    train_ds, val_ds, test_ds = split_dataset(dataset, [0.6,0.3,0.1])
+    train_ds, val_ds, test_ds = split_dataset(dataset, [0.8,0.1,0.1])
 
     train_loader  = DataLoader(train_ds, batch_size = batch_size, shuffle=True)
     val_loader    = DataLoader(val_ds,   batch_size = batch_size, shuffle=False)

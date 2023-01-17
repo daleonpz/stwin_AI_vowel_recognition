@@ -5,7 +5,22 @@ import torch.nn.functional as F
 import torch.optim as optim
 import logging
 
+from models.cnn      import CNN
+# from models.cnn_2    import CNN
+# from models.model    import CNN
+
 logger = logging.getLogger(__name__)
+
+## This two functions will be used everywhere
+def get_labels_map():
+    labels_map= {"A": 0, "E": 1, "I": 2, "O": 3, "U": 4}
+    return labels_map
+
+def get_model(num_classes, device):
+    model     = CNN(fc_num_output=num_classes).to(device)
+    logger.info(f'Defined Model: {model}')
+    return model
+###########################################################
 
 def train_one_epoch(model, optimizer, criterion, train_loader, device):
     loss_step, metric_step = [], []

@@ -3,6 +3,7 @@ from modules.train   import *
 from modules.utils   import *
 from models.cnn_2    import CNN
 
+
 import logging
 import torch
 import torch.nn as nn
@@ -13,14 +14,16 @@ from torch.utils.data import DataLoader
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+logging.basicConfig(level=logging.DEBUG)
+logging.root.setLevel(logging.NOTSET)
+
 def main():
-    logging.getLogger('models.cnn_2').setLevel(logging.INFO)
+    logging.getLogger('modules.dataset').setLevel(logging.WARNING)
+    logging.getLogger('modules.train').setLevel(logging.INFO)
+    logging.getLogger('modules.utils').setLevel(logging.WARNING)
 
-    logging.getLogger('modules.dataset').setLevel(logging.INFO)
-    logging.getLogger('modules.train').setLevel(logging.DEBUG)
-    logging.getLogger('modules.utils').setLevel(logging.DEBUG)
-
-    model = CNN(fc_num_output=5, fc_hidden_size=[]).to(DEVICE)
+    num_classes = len( get_labels_map())
+    model = get_model(num_classes, DEVICE)
     param_size = 0
     buffer_size = 0
     size_datatype_in_bytes = 4 #float32

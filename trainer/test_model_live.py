@@ -13,7 +13,6 @@ import torch
 from modules.dataset import *
 from modules.train   import *
 from modules.utils   import *
-from models.cnn_2    import CNN
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 NUM_SAMPLES = 400
@@ -94,11 +93,12 @@ def main(port, baud, sample_freq):
 
     sampling_time = 1.0 / sample_freq
 
-    labels_map= {"A": 0, "E": 1, "I": 2, "O": 3, "U": 4, "-": 99}
-    reverse_labels_map = {0: "A", 1: "E", 2: "I", 3: "O", 4: "U", 99: "-"}
+    labels_map = get_labels_map()
+    reverse_labels_map = {v: k for k, v in labels_map.items()}
 
+    num_classes = len(labels_map)
     # load model from file pytorch
-    model = CNN(fc_num_output=5, fc_hidden_size=[]).to(DEVICE)
+    model = get_model(num_classes, DEVICE)
     model.load_state_dict(torch.load('results/model.pth'))
     model.eval()
 

@@ -98,7 +98,7 @@ def main(port, baud, sample_freq):
     reverse_labels_map = {0: "A", 1: "E", 2: "I", 3: "O", 4: "U", 99: "-"}
 
     # load model from file pytorch
-    model = CNN(fc_num_output=5, fc_hidden_size=[32]).to(DEVICE)
+    model = CNN(fc_num_output=5, fc_hidden_size=[]).to(DEVICE)
     model.load_state_dict(torch.load('results/model.pth'))
     model.eval()
 

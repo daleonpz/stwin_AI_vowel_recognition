@@ -129,7 +129,7 @@ def main(dataset_path, num_epochs=10, batch_size=16, learning_rate=0.00001):
 
     ## Pre tranining config
     dataset = CustomDataset(dataset_path, labels_map)
-    model     = CNN(fc_num_output=5, fc_hidden_size=[32]).to(DEVICE)
+    model     = CNN(fc_num_output=5, fc_hidden_size=[]).to(DEVICE)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     criterion = nn.CrossEntropyLoss()
 

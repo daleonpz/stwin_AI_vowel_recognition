@@ -1,5 +1,5 @@
 Neural Network Tools for STM32AI v1.6.0 (STM.ai v7.1.0-RC3)
-Created date          : 2023-01-17 11:59:48
+Created date          : 2023-01-17 13:25:46
 Parameters            : generate -m results/model.onnx --type onnx -o ../deployment/X-CUBE-AI/App --name model
 
 Exec/report summary (generate)
@@ -11,7 +11,7 @@ compression           : lossless
 workspace dir         : /home/me/Documents/git/mystuff/tinyml/stwin_AI_vowel_detection/trainer/stm32ai_ws
 output dir            : /home/me/Documents/git/mystuff/tinyml/stwin_AI_vowel_detection/deployment/X-CUBE-AI/App
 model_name            : model
-model_hash            : 76fd2402859497d1400188f2d129dcfb
+model_hash            : 559535ae0157dbe163fa643ee76961bd
 input 1/1             : 'input'
                         2400 items, 9.38 KiB, ai_float, float, (1,6,20,20), domain:user/
 output 1/1            : 'output'
@@ -26,29 +26,29 @@ Model name - model ['input'] ['output']
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 id   layer (type)                       oshape         param/size     macc      connected to         |   c_size             c_macc            c_type               
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-7    fc_layers_0_weight (Placeholder)   (1,600,1,5)    3,000/12,000                                  |   -12,000(-100.0%)                    
+9    fc_layers_0_weight (Placeholder)   (1,600,1,5)    3,000/12,000                                  |   -12,000(-100.0%)                    
      fc_layers_0_bias (Placeholder)     (1,1,1,5)      5/20                                          |   -20(-100.0%)                        
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 0    input (Input)                      (1,20,20,6)                                                  |                                        transpose()[0]       
-     node_7 (Conv2D)                    (1,20,20,12)   660/2,640      259,212   input                |                      +9,600(+3.7%)     optimized_conv2d()[1]
+     node_17 (Conv2D)                   (1,20,20,12)   660/2,640      259,212   input                |                      +9,600(+3.7%)     optimized_conv2d()[1]
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-1    node_8 (Nonlinearity)              (1,20,20,12)                  4,800     node_7               |                      -4,800(-100.0%)  
+1    node_18 (Nonlinearity)             (1,20,20,12)                  4,800     node_17              |                      -4,800(-100.0%)  
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-2    node_9 (Pool)                      (1,10,10,12)                  4,800     node_8               |                      -4,800(-100.0%)  
+3    node_21 (Pool)                     (1,10,10,12)                  4,800     node_18              |                      -4,800(-100.0%)  
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-3    node_10 (Conv2D)                   (1,10,10,24)   2,616/10,464   259,224   node_9               |                      +4,800(+1.9%)     optimized_conv2d()[2]
+4    node_22 (Conv2D)                   (1,10,10,24)   2,616/10,464   259,224   node_21              |                      +4,800(+1.9%)     optimized_conv2d()[2]
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-4    node_11 (Nonlinearity)             (1,10,10,24)                  2,400     node_10              |                      -2,400(-100.0%)  
+5    node_23 (Nonlinearity)             (1,10,10,24)                  2,400     node_22              |                      -2,400(-100.0%)  
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-5    node_12 (Pool)                     (1,5,5,24)                    2,400     node_11              |                      -2,400(-100.0%)  
+7    node_26 (Pool)                     (1,5,5,24)                    2,400     node_23              |                      -2,400(-100.0%)  
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-6    node_18 (Reshape)                  (1,1,1,600)                             node_12              |                                       
+8    node_32 (Reshape)                  (1,1,1,600)                             node_26              |                                       
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-7    node_19 (Gemm)                     (1,1,1,5)                     3,005     node_18              |   +12,020(+100.0%)                     gemm()[3]            
+9    node_33 (Gemm)                     (1,1,1,5)                     3,005     node_32              |   +12,020(+100.0%)                     gemm()[3]            
                                                                                 fc_layers_0_weight   |  
                                                                                 fc_layers_0_bias     |  
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-8    output (Nonlinearity)              (1,1,1,5)                     75        node_19              |                                        nl()/o[4]            
+10   output (Nonlinearity)              (1,1,1,5)                     75        node_33              |                                        nl()/o[4]            
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 model/c-model: macc=535,916/535,916  weights=25,124/25,124  activations=--/12,624 io=--/9,620
 
@@ -72,18 +72,18 @@ c_id   name (*_array)           item/size    domain/mem-pool           c-type   
 -----------------------------------------------------------------------------------------------------
 0      input_output             2400/9600    user/                     float         float   /input 
 1      input_Transpose_output   2400/9600    activations/**default**   float         float          
-2      node_7_output            1200/4800    activations/**default**   float         float          
-3      node_10_output           600/2400     activations/**default**   float         float          
-4      node_19_output           5/20         activations/**default**   float         float          
+2      node_17_output           1200/4800    activations/**default**   float         float          
+3      node_22_output           600/2400     activations/**default**   float         float          
+4      node_33_output           5/20         activations/**default**   float         float          
 5      output_output            5/20         user/                     float         float   /output
-6      node_7_weights           648/2592     weights/                  const float   float          
-7      node_7_bias              12/48        weights/                  const float   float          
-8      node_10_weights          2592/10368   weights/                  const float   float          
-9      node_10_bias             24/96        weights/                  const float   float          
+6      node_17_weights          648/2592     weights/                  const float   float          
+7      node_17_bias             12/48        weights/                  const float   float          
+8      node_22_weights          2592/10368   weights/                  const float   float          
+9      node_22_bias             24/96        weights/                  const float   float          
 10     fc_layers_0_bias         5/20         weights/                  const float   float          
 11     fc_layers_0_weight       3000/12000   weights/                  const float   float          
-12     node_7_scratch0          480/1920     activations/**default**   float         float          
-13     node_10_scratch0         480/1920     activations/**default**   float         float          
+12     node_17_scratch0         480/1920     activations/**default**   float         float          
+13     node_22_scratch0         480/1920     activations/**default**   float         float          
 -----------------------------------------------------------------------------------------------------
 
 C-Layers (5)
@@ -93,24 +93,24 @@ c_id   name (*_layer)    id   layer_type         macc     rom     tensors       
 0      input_Transpose   2    transpose          0        0       I: input_output             (1,6,20,20) (0) 
                                                                   O: input_Transpose_output   (1,20,20,6) (1) 
 ---------------------------------------------------------------------------------------------------------------
-1      node_7            2    optimized_conv2d   268812   2640    I: input_Transpose_output   (1,20,20,6) (1) 
-                                                                  S: node_7_scratch0                          
-                                                                  W: node_7_weights           (6,12,3,3) (6)  
-                                                                  W: node_7_bias              (1,1,1,12) (7)  
-                                                                  O: node_7_output            (1,10,10,12) (2)
+1      node_17           3    optimized_conv2d   268812   2640    I: input_Transpose_output   (1,20,20,6) (1) 
+                                                                  S: node_17_scratch0                         
+                                                                  W: node_17_weights          (6,12,3,3) (6)  
+                                                                  W: node_17_bias             (1,1,1,12) (7)  
+                                                                  O: node_17_output           (1,10,10,12) (2)
 ---------------------------------------------------------------------------------------------------------------
-2      node_10           5    optimized_conv2d   264024   10464   I: node_7_output            (1,10,10,12) (2)
-                                                                  S: node_10_scratch0                         
-                                                                  W: node_10_weights          (12,24,3,3) (8) 
-                                                                  W: node_10_bias             (1,1,1,24) (9)  
-                                                                  O: node_10_output           (1,5,5,24) (3)  
+2      node_22           7    optimized_conv2d   264024   10464   I: node_17_output           (1,10,10,12) (2)
+                                                                  S: node_22_scratch0                         
+                                                                  W: node_22_weights          (12,24,3,3) (8) 
+                                                                  W: node_22_bias             (1,1,1,24) (9)  
+                                                                  O: node_22_output           (1,5,5,24) (3)  
 ---------------------------------------------------------------------------------------------------------------
-3      node_19           7    gemm               3005     12020   I: node_10_output0          (1,1,1,600) (3) 
+3      node_33           9    gemm               3005     12020   I: node_22_output0          (1,1,1,600) (3) 
                                                                   I: fc_layers_0_weight       (1,5,1,600) (11)
                                                                   I: fc_layers_0_bias         (1,1,1,5) (10)  
-                                                                  O: node_19_output           (1,1,1,5) (4)   
+                                                                  O: node_33_output           (1,1,1,5) (4)   
 ---------------------------------------------------------------------------------------------------------------
-4      output            8    nl                 75       0       I: node_19_output           (1,1,1,5) (4)   
+4      output            10   nl                 75       0       I: node_33_output           (1,1,1,5) (4)   
                                                                   O: output_output            (1,1,1,5) (5)   
 ---------------------------------------------------------------------------------------------------------------
 
@@ -121,10 +121,10 @@ Complexity report per layer - macc=535,916 weights=25,124 act=12,624 ram_io=9,62
 id   name      c_macc                    c_rom                     c_id
 ------------------------------------------------------------------------
 0    input     |                  0.0%   |                  0.0%   [0] 
-0    node_7    ||||||||||||||||  50.2%   ||||              10.5%   [1] 
-3    node_10   |||||||||||||||   49.3%   ||||||||||||||    41.6%   [2] 
-7    node_19   |                  0.6%   ||||||||||||||||  47.8%   [3] 
-8    output    |                  0.0%   |                  0.0%   [4] 
+0    node_17   ||||||||||||||||  50.2%   ||||              10.5%   [1] 
+4    node_22   |||||||||||||||   49.3%   ||||||||||||||    41.6%   [2] 
+9    node_33   |                  0.6%   ||||||||||||||||  47.8%   [3] 
+10   output    |                  0.0%   |                  0.0%   [4] 
 
 Generated files (5)
 ----------------------------------------------------------------------------------------------------------------

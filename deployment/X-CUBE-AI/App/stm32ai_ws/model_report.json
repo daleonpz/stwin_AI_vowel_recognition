@@ -12,12 +12,12 @@
         "factor": null,
         "layers": {}
     },
-    "date_time": "Tue Jan 17 11:59:48 2023",
+    "date_time": "Tue Jan 17 13:25:46 2023",
     "error": 0,
     "error_str": [],
     "exec_cmd": "generate",
     "exec_duration": 0.0,
-    "hash": "76fd2402859497d1400188f2d129dcfb",
+    "hash": "559535ae0157dbe163fa643ee76961bd",
     "inputs": [
         "input"
     ],
@@ -29,7 +29,7 @@
                 "psize": 12000,
                 "rom_size": 0
             },
-            "id": 7,
+            "id": 9,
             "inputs": [],
             "name": "fc_layers_0_weight",
             "type": "Placeholder"
@@ -41,7 +41,7 @@
                 "psize": 20,
                 "rom_size": 0
             },
-            "id": 7,
+            "id": 9,
             "inputs": [],
             "name": "fc_layers_0_bias",
             "type": "Placeholder"
@@ -93,7 +93,7 @@
             "inputs": [
                 "input"
             ],
-            "name": "node_7",
+            "name": "node_17",
             "type": "Conv2D"
         },
         {
@@ -105,9 +105,9 @@
             },
             "id": 1,
             "inputs": [
-                "node_7"
+                "node_17"
             ],
-            "name": "node_8",
+            "name": "node_18",
             "type": "Nonlinearity"
         },
         {
@@ -117,11 +117,11 @@
                 "psize": 0,
                 "rom_size": 0
             },
-            "id": 2,
+            "id": 3,
             "inputs": [
-                "node_8"
+                "node_18"
             ],
-            "name": "node_9",
+            "name": "node_21",
             "type": "Pool"
         },
         {
@@ -143,26 +143,12 @@
                 },
                 "rom_size": 10464
             },
-            "id": 3,
-            "inputs": [
-                "node_9"
-            ],
-            "name": "node_10",
-            "type": "Conv2D"
-        },
-        {
-            "extras": {
-                "n_macc": 2400,
-                "n_params": 0,
-                "psize": 0,
-                "rom_size": 0
-            },
             "id": 4,
             "inputs": [
-                "node_10"
+                "node_21"
             ],
-            "name": "node_11",
-            "type": "Nonlinearity"
+            "name": "node_22",
+            "type": "Conv2D"
         },
         {
             "extras": {
@@ -173,9 +159,23 @@
             },
             "id": 5,
             "inputs": [
-                "node_11"
+                "node_22"
             ],
-            "name": "node_12",
+            "name": "node_23",
+            "type": "Nonlinearity"
+        },
+        {
+            "extras": {
+                "n_macc": 2400,
+                "n_params": 0,
+                "psize": 0,
+                "rom_size": 0
+            },
+            "id": 7,
+            "inputs": [
+                "node_23"
+            ],
+            "name": "node_26",
             "type": "Pool"
         },
         {
@@ -185,11 +185,11 @@
                 "psize": 0,
                 "rom_size": 0
             },
-            "id": 6,
+            "id": 8,
             "inputs": [
-                "node_12"
+                "node_26"
             ],
-            "name": "node_18",
+            "name": "node_32",
             "type": "Reshape"
         },
         {
@@ -211,13 +211,13 @@
                 },
                 "rom_size": 12020
             },
-            "id": 7,
+            "id": 9,
             "inputs": [
-                "node_18",
+                "node_32",
                 "fc_layers_0_weight",
                 "fc_layers_0_bias"
             ],
-            "name": "node_19",
+            "name": "node_33",
             "type": "Gemm"
         },
         {
@@ -239,9 +239,9 @@
                 },
                 "rom_size": 0
             },
-            "id": 8,
+            "id": 10,
             "inputs": [
-                "node_19"
+                "node_33"
             ],
             "name": "output",
             "type": "Nonlinearity"

@@ -3,7 +3,7 @@
   ******************************************************************************
   * @file    model_data.h
   * @author  AST Embedded Analytics Research Platform
-  * @date    Tue Jan 17 17:03:06 2023
+  * @date    Tue Jan 17 17:45:32 2023
   * @brief   AI Tool Automatic Code Generator for Embedded NN computing
   ******************************************************************************
   * Copyright (c) 2017 STMicroelectronics.
@@ -26,18 +26,18 @@
 
 
 #define AI_MODEL_DATA_ACTIVATIONS_SIZES \
-  { 21744, }
-#define AI_MODEL_DATA_ACTIVATIONS_SIZE     (21744)
+  { 12624, }
+#define AI_MODEL_DATA_ACTIVATIONS_SIZE     (12624)
 #define AI_MODEL_DATA_ACTIVATIONS_COUNT    (1)
-#define AI_MODEL_DATA_ACTIVATION_1_SIZE    (21744)
+#define AI_MODEL_DATA_ACTIVATION_1_SIZE    (12624)
 
 
 
 #define AI_MODEL_DATA_WEIGHTS_SIZES \
-  { 13892, }
-#define AI_MODEL_DATA_WEIGHTS_SIZE         (13892)
+  { 13604, }
+#define AI_MODEL_DATA_WEIGHTS_SIZE         (13604)
 #define AI_MODEL_DATA_WEIGHTS_COUNT        (1)
-#define AI_MODEL_DATA_WEIGHT_1_SIZE        (13892)
+#define AI_MODEL_DATA_WEIGHT_1_SIZE        (13604)
 
 
 

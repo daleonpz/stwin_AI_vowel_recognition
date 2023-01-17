@@ -4,7 +4,7 @@
   ******************************************************************************
   * @file    model.h
   * @author  AST Embedded Analytics Research Platform
-  * @date    Tue Jan 17 17:03:06 2023
+  * @date    Tue Jan 17 17:45:32 2023
   * @brief   AI Tool Automatic Code Generator for Embedded NN computing
   ******************************************************************************
   * @attention
@@ -71,7 +71,7 @@ AI_DEPRECATED
 #define AI_MODEL_OUT_1_SIZE_BYTES  (20)
 
 /******************************************************************************/
-#define AI_MODEL_N_NODES (10)
+#define AI_MODEL_N_NODES (6)
 
 
 AI_API_DECLARE_BEGIN

@@ -103,7 +103,7 @@ GCC             = "#{COMPILER_PATH}/bin/#{COMPILER_PREFIX}gcc"
 
 
 MCPU            = "-mcpu=cortex-m4" 
-DEBUG_LEVEL     = "-g3"
+DEBUG_LEVEL     = "-g0"
 # COMPILER_OPTS   = "-mcpu=cortex-m7 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F746xx"
 # CFLAGS          = "-O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP"
 # MORE_FLAGS      = "-specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb"

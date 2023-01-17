@@ -34,6 +34,11 @@ def main():
     for buffer in model.buffers():
         buffer_size += buffer.nelement() * buffer.element_size()
 
+    # print number of parameters per layer
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            print(name, param.nelement())
+
     size_all_kb = (param_size + buffer_size)/ 1024
 
     if( size_all_kb > 500 ):

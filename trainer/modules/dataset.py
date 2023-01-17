@@ -15,6 +15,28 @@ def normalize_columns_between_0_and_1(matrix):
     matrix = matrix / (mmax - mmin)
     return matrix
 
+def normalize_acc_gyro(data):
+    acc = data[:, 0:3]
+    gyro = data[:, 3:6]
+
+    flat_acc = acc.flatten()
+    flat_gyro = gyro.flatten()
+
+    mmin_acc = np.min(flat_acc)
+    mmax_acc = np.max(flat_acc)
+    mmin_gyro = np.min(flat_gyro)
+    mmax_gyro = np.max(flat_gyro)
+
+    acc = acc - mmin_acc
+    acc = acc / (mmax_acc - mmin_acc)
+
+    gyro = gyro - mmin_gyro
+    gyro = gyro / (mmax_gyro - mmin_gyro)
+
+    data[:, 0:3] = acc
+    data[:, 3:6] = gyro
+
+    return data
 
 def data2image(data):
     len_data = len(data)
@@ -24,7 +46,8 @@ def data2image(data):
         logger.warn('not a perfect square, padding with zeros')
         data = np.pad(data, (0, img_size * img_size - len_data), 'constant')
 
-    ndata = normalize_columns_between_0_and_1(data)
+#     ndata = normalize_columns_between_0_and_1(data)
+    ndata = normalize_acc_gyro(data)
 
     logger.debug(f'first data as normalized vector: {ndata[0, :]}')
     # to ensure that each channel corresponds to a different feature

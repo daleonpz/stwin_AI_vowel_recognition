@@ -28,10 +28,14 @@ def export_model_to_onnx(model):
     # Fuse some modules. it may save on memory access, make the model run faster, and improve its accuracy.
     # https://pytorch.org/tutorials/recipes/fuse.html
     torch.quantization.fuse_modules(model,
-                                    [['conv1', 'bn1','relu1'], 
-                                     ['conv2', 'bn2','relu2']],
+                                    [['conv1','relu1'], 
+                                     ['conv2','relu2']],
                                     inplace=True)
-
+#     torch.quantization.fuse_modules(model,
+#                                     [['conv1', 'bn1','relu1'], 
+#                                      ['conv2', 'bn2','relu2']],
+#                                     inplace=True)
+# 
     # Convert to ONNX. 
     # Explanation on why we need a dummy input
     # https://github.com/onnx/tutorials/issues/158

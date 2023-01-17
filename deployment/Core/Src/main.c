@@ -93,7 +93,6 @@ static volatile uint32_t g_acc_counter      = 0;
 static void SystemClock_Config(void);
 
 static void InitTimers(void);
-static void InitPredictiveMaintenance(void);
 
 static void ReadMotionData(void);
 
@@ -209,6 +208,38 @@ static int aiAdquireAndProcessData(void *in_data)
 //     _PRINTF("min: %f %f %f %f %f %f \r\n", min[0], min[1], min[2], min[3], min[4], min[5]);
 //     _PRINTF("max: %f %f %f %f %f %f \r\n", max[0], max[1], max[2], max[3], max[4], max[5]);
 
+    ai_float acc_min = min[0];
+    ai_float acc_max = max[0];
+    ai_float gyro_min = min[3];
+    ai_float gyro_max = max[3];
+
+    acc_min = MIN(acc_min, min[1]);
+    acc_min = MIN(acc_min, min[2]);
+    acc_max = MAX(acc_max, max[1]);
+    acc_max = MAX(acc_max, max[2]);
+
+    gyro_min = MIN(gyro_min, min[4]);
+    gyro_min = MIN(gyro_min, min[5]);
+    gyro_max = MAX(gyro_max, max[4]);
+    gyro_max = MAX(gyro_max, max[5]);
+
+    min[0] = acc_min;
+    min[1] = acc_min;
+    min[2] = acc_min;
+    max[0] = acc_max;
+    max[1] = acc_max;
+    max[2] = acc_max;
+
+    min[3] = gyro_min;
+    min[4] = gyro_min;
+    min[5] = gyro_min;
+    max[3] = gyro_max;
+    max[4] = gyro_max;
+    max[5] = gyro_max;
+
+//     _PRINTF("min: %f %f %f %f %f %f \r\n", min[0], min[1], min[2], min[3], min[4], min[5]);
+//     _PRINTF("max: %f %f %f %f %f %f \r\n", max[0], max[1], max[2], max[3], max[4], max[5]);
+// 
     // normalize the float array
 //     _PRINTF("Normalizing data...\r\n");
     for (int i = 0; i < NUM_OF_SAMPLES; i ++) 
@@ -216,11 +247,11 @@ static int aiAdquireAndProcessData(void *in_data)
         const int idx = i*6;
         for (int j = 0; j < 6; j++) 
         {
-            ai_float max_min = max[j] - min[j];
-            if (max_min == 0) {
+            ai_float range = max[j] - min[j];
+            if (range == 0) {
                 data[idx + j] = 0;
             } else {
-                data[idx + j] = (data[idx + j] - min[j]) / max_min;
+                data[idx + j] = (data[idx + j] - min[j]) / range;
             }
         }
 //         _PRINTF("[> %i] %f %f %f %f %f %f\r\n ", i, data[idx], data[idx + 1], data[idx + 2], data[idx + 3], data[idx + 4], data[idx + 5]);
@@ -344,7 +375,7 @@ int main(void)
     while (1)
     {
         
-        if (WAIT_N_SAMPLES*3 == g_acc_counter){
+        if (WAIT_N_SAMPLES*2 == g_acc_counter){
             uint32_t tick_start  = 0;
             uint32_t tick_end    = 0;
             g_led_on ^= 1;
@@ -520,27 +551,6 @@ static void InitTimers(void)
 }
 
 
-/** @brief Predictive Maintenance Initialization
- * @param None
- * @retval None
- */
-static void InitPredictiveMaintenance(void)
-{
-    /* Set the vibration parameters with default values */
-    MotionSP_SetDefaultVibrationParam();
-
-    _PRINTF("\r\nAccelerometer parameters:\r\n");
-    _PRINTF("\r\n");
-
-    _PRINTF("************************************************************************\r\n\r\n");
-
-    /* Initializes accelerometer with vibration parameters values */
-    if(MotionSP_AcceleroConfig()) {
-        _PRINTF("\tFailed Set Accelerometer Parameters\r\n\n");
-    } else {
-        _PRINTF("\tOK Set Accelerometer Parameters\r\n\n");
-    }
-}
 
 /**
  * @brief  System Clock Configuration

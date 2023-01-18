@@ -143,7 +143,7 @@ The results of training are the following:
 
 The overall performance is above 90%. 
 
-For the training I wrote python scripts and C files for the microcontroller. All the relevant code for this task can be found [here](/trainer).  Run `python3 train_model.py  --dataset_path ../data --num_epochs 200` to train the model. 
+For the training I wrote python scripts and C files for the microcontroller. All the relevant code for this task can be found [here](/trainer).  Run `python3 train_model.py  --dataset_path ../data --num_epochs 200 --learning_rate 0.0005 --batch_size 128` to train the model. 
 
 ```sh
 Ep 199/200: Accuracy : Train:98.25       Val:83.00 || Loss: Train 0.956          Val 1.101:  99%|█████████████████████████████████████████████████████▍| 

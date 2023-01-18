@@ -1,5 +1,5 @@
 # Introduction
-The objective of this project was to train a neural network your **vowel recognition** based on **Inertial Movement Unit (IMU)** inputs and deploy the trained network on the dev board [STEVAL-STWINKT1](https://www.st.com/en/evaluation-tools/steval-stwinkt1.html) from STM32.
+The objective of this project was to train a neural network for **vowel recognition** based on **Inertial Movement Unit (IMU)** measurements and deploy the trained network on the dev board [STEVAL-STWINKT1](https://www.st.com/en/evaluation-tools/steval-stwinkt1.html) from STM32.
 
 Workflow overview:
 

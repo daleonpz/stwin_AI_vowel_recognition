@@ -1,6 +1,8 @@
 # Introduction
 The objective of this project was to train a neural network for **vowel recognition** based on **Inertial Movement Unit (IMU)** measurements and deploy it on the dev board [STEVAL-STWINKT1](https://www.st.com/en/evaluation-tools/steval-stwinkt1.html) from STM32.
 
+The neural network is based on two layers of CNN + BN + ReLU, a Global Average Pooling layers and a Fully Connected + Softmax layer. The size of the neural network is **13KB**, and has **85% accuracy on the testset**. 
+
 Workflow overview:
 
 ![Project Workflow](/docs/_images/workflow.png)
@@ -142,6 +144,27 @@ The results of training are the following:
 The overall performance is above 90%. 
 
 For the training I wrote python scripts and C files for the microcontroller. All the relevant code for this task can be found [here](/trainer).  Run `python3 train_model.py  --dataset_path ../data --num_epochs 200` to train the model. 
+
+```sh
+Ep 199/200: Accuracy : Train:98.25       Val:83.00 || Loss: Train 0.956          Val 1.101:  99%|█████████████████████████████████████████████████████▍| 
+Ep 199/200: Accuracy : Train:98.25       Val:83.00 || Loss: Train 0.956          Val 1.101: 100%|██████████████████████████████████████████████████████| 
+Ep 199/200: Accuracy : Train:98.25       Val:83.00 || Loss: Train 0.956          Val 1.101: 100%|██████████████████████████████████████████████████████| 
+
+              precision    recall  f1-score   support                                
+                                                                                                                             
+           0      1.000     1.000     1.000        23                                              
+           1      0.966     1.000     0.982        28       
+           2      0.955     0.875     0.913        24                                
+           3      0.800     0.857     0.828        14                                     
+           4      0.818     0.818     0.818        11                      
+                                                                                        
+    accuracy                          0.930       100                                        
+   macro avg      0.908     0.910     0.908       100
+weighted avg      0.931     0.930     0.930       100
+
+Test: acc 93.0    loss 0.9912329316139221
+
+```
 
 # Deployment on the microcontroller
 The CUBE-AI tool from STMicroelectronics doesn't support pytorch models, so I had two options. Either train the whole model again in tensorflow and then export it to tensorflow lite, or convert the pytorch model to ONNX (Open Neural Network Exchange). I chose the latter.

@@ -14,7 +14,7 @@ Workflow overview:
 
 # Problem definition 
 
-The vowel recognition is a classification problem. I defined the following constrains, context and architecture for this particular problem.
+Vowel recognition is a classification problem, so I defined the following setup for the neural network.
 
 * Number of classes: 5 (A, E, I, O, U)
 * Data:

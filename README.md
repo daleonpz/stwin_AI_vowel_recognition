@@ -18,8 +18,8 @@ The vowel recognition is a classification problem. I defined the following const
 
 * Number of classes: 5 (A, E, I, O, U)
 * Data:
-    * 200 samples/class
-    * Split 60/30/10
+    * 200 samples/class = 1000 samples
+    * Split 80/10/10
 
 * Input: a 20x20x6 matrix based on IMU data.
 * Output: a 5x1 probability vector.

@@ -38,7 +38,7 @@ mmin_acc, mmax_acc, mmin_gyro, mmax_gyro = get_min_max(data_mixed)
 
 min_max = np.array([mmin_acc, mmin_gyro, mmax_acc, mmax_gyro])
 
-measurement = np.array([ -1002.000000,  -353010.000000,  1998.000000, 419090.000000])
+measurement = np.array([ -1998.000000,  -888860.000000, 1998.000000, 732970.000000])
 
 print(f'Testing function to get max and min of a measurement')
 dist = np.linalg.norm(measurement.flatten() - min_max.flatten())

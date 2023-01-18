@@ -8,31 +8,16 @@ import serial
 import time
 
 
-def norm(v):
-    return np.sqrt(np.sum(np.square(v)))
+def normalize_between_0_and_1(data):
+    flat_data = data.flatten()
 
+    mmin_data = np.min(flat_data)
+    mmax_data = np.max(flat_data)
 
-def normalize(v):
-    norm = np.linalg.norm(v)
-    if norm == 0:
-        return v
-    return v / norm
+    data = data - mmin_data
+    data = data / (mmax_data - mmin_data)
 
-
-# normalize the columns of a matrix between -1 and 1
-def normalize_columns_between_minus_1_and_1(matrix):
-    matrix = matrix - np.mean(matrix, axis=0)
-    matrix = matrix / np.max(np.abs(matrix), axis=0)
-    return matrix
-
-
-def normalize_columns_between_0_and_1(matrix):
-    mmin = np.min(matrix, axis=0)
-    mmax = np.max(matrix, axis=0)
-    matrix = matrix - mmin
-    matrix = matrix / (mmax - mmin)
-    return matrix
-
+    return data
 
 # plot two images side by side in a figure as subplots
 def plot_two_images_side_by_side(image1, image2, title1, title2):
@@ -55,16 +40,18 @@ def plot_two_vectors_side_by_side(vector1, vector2, title1, title2):
 
 
 # plot data in 2x3 subplots
-def plot_data(mdata, lindata):
+def plot_data(macc, linacc, mgyro, lingyro):
     fig, ((ax1, ax2, ax3, ax4), (ax5, ax6, ax7, ax8)) = plt.subplots(2, 4)
-    ax1.imshow(mdata[:, :, 0])
-    ax2.imshow(mdata[:, :, 1])
-    ax3.imshow(mdata[:, :, 2])
-    ax4.imshow(mdata)
+    ax1.imshow(macc[:, :, 0])
+    ax2.imshow(macc[:, :, 1])
+    ax3.imshow(macc[:, :, 2])
+    ax4.plot(linacc)
+    
+    ax5.imshow(mgyro[:, :, 0])
+    ax6.imshow(mgyro[:, :, 1])
+    ax7.imshow(mgyro[:, :, 2])
+    ax8.plot(lingyro)
 
-    ax5.plot(lindata[:, 0])
-    ax6.plot(lindata[:, 1])
-    ax7.plot(lindata[:, 2])
 
     # show plot fullscreen
     mng = plt.get_current_fig_manager()
@@ -237,14 +224,12 @@ if __name__ == "__main__":
             time.sleep(sleep_time)
             continue
 
-        nacc = normalize_columns_between_0_and_1(acc)
-        ngyro = normalize_columns_between_0_and_1(gyro)
+        acc = normalize_between_0_and_1(acc)
+        gyro = normalize_between_0_and_1(gyro)
 
-        print("nacc.shape: ", nacc.shape)
-        nacc = nacc.reshape(img_size, img_size, 3)
-        print("nacc.shape: ", nacc.shape)
+        nacc = acc.reshape(img_size, img_size, 3)
+        ngyro = gyro.reshape(img_size, img_size, 3)
 
-        ngyro = ngyro.reshape(img_size, img_size, 3)
-        plot_data(nacc, acc)
+        plot_data(nacc, acc, ngyro, gyro)
         plt.pause(sleep_time)
         plt.close("all")

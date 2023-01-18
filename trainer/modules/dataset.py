@@ -8,13 +8,6 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-def normalize_columns_between_0_and_1(matrix):
-    mmin = np.min(matrix, axis=0)
-    mmax = np.max(matrix, axis=0)
-    matrix = matrix - mmin
-    matrix = matrix / (mmax - mmin)
-    return matrix
-
 def normalize_acc_gyro(data):
     acc = data[:, 0:3]
     gyro = data[:, 3:6]
@@ -46,14 +39,16 @@ def data2image(data):
         logger.warn('not a perfect square, padding with zeros')
         data = np.pad(data, (0, img_size * img_size - len_data), 'constant')
 
-#     ndata = normalize_columns_between_0_and_1(data)
     ndata = normalize_acc_gyro(data)
 
     logger.debug(f'first data as normalized vector: {ndata[0, :]}')
+    
+    data = ndata.reshape((6,img_size, img_size))
     # to ensure that each channel corresponds to a different feature
-    data = np.zeros((6, img_size, img_size))
-    for j in range(6):
-        data[j, :, :] = ndata[:, j].reshape(img_size, img_size)
+#     data = np.zeros((6, img_size, img_size))
+#     for j in range(6):
+#         data[j, :, :] = ndata[:, j].reshape(img_size, img_size)
+
 
     assert data.shape == (6, img_size, img_size)
     return data

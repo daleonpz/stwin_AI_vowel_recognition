@@ -154,6 +154,27 @@ def main(dataset_path, num_epochs=10, batch_size=16, learning_rate=0.00001):
     val_loader    = DataLoader(val_ds,   batch_size = batch_size, shuffle=False)
     test_loader   = DataLoader(test_ds,  batch_size = batch_size, shuffle=False)
 
+#     # print all test samples
+#     for data in train_loader:
+#         test_data, test_labels = (
+#             data[0].to(DEVICE, dtype=torch.float32),
+#             data[1].to(DEVICE),
+#         )
+# 
+#     # select 5 random samples
+#     fig, ax = plt.subplots(5, 2)
+#     for i in range(5):
+#         index = np.random.randint(0, len(test_data))
+#         _temp = test_data[index].cpu().numpy()
+#         _temp = np.reshape(_temp, (400, 6))
+# 
+#         ax[i, 0].plot(_temp[:,0:3])
+#         ax[i, 1].plot(_temp[:,3:6])
+# 
+# 
+#     plt.show()
+
+
     dict_log = train(model, 
                      optimizer = optimizer,
                      criterion = criterion,

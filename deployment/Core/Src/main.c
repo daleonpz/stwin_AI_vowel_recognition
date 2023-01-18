@@ -27,13 +27,13 @@
 
 #include "model.h"
 #include "model_data.h"
+#include "ring_buffer.h"
 
 /* Private define ------------------------------------------------------------*/
-#define RING_BUFFER_SIZE    (600*6) /* 600 samples for each axis */
 #define SAMPLES_PER_SEC     (1)   /* 1 sample per second */
 #define WAIT_N_SAMPLES      (FREQ_ACC_GYRO_MAG / SAMPLES_PER_SEC)  
-#define TENSOR_INPUT_SIZE   (20*20*6)
-#define NUM_OF_SAMPLES      (TENSOR_INPUT_SIZE/ 6) /* 6 bytes per sample */
+#define NUM_OF_SAMPLES      (20*20)
+#define TENSOR_INPUT_SIZE   (NUM_OF_SAMPLES*6)
 #define INFERENCE_THRESHOLD (0.8)
 
 /* Imported Variables -------------------------------------------------------------*/
@@ -62,9 +62,6 @@ static ai_handle model = AI_HANDLE_NULL;
 
 AI_ALIGNED(32)
 static ai_u8 activations[AI_MODEL_DATA_ACTIVATIONS_SIZE];
-// AI_ALIGNED(32)
-// static ai_u64 weights[AI_MODEL_DATA_WEIGHTS_SIZE];
-// static ai_u64 activations[AI_MODEL_DATA_ACTIVATIONS_SIZE];
 AI_ALIGNED(32)
 static ai_float in_data[AI_MODEL_IN_1_SIZE];
 AI_ALIGNED(32)
@@ -73,10 +70,6 @@ static ai_float out_data[AI_MODEL_OUT_1_SIZE];
 /* Array of pointer to manage the model's input/output tensors */
 static ai_buffer *ai_input;
 static ai_buffer *ai_output;
-
-static int32_t _ring_buffer[RING_BUFFER_SIZE];
-static uint32_t _ring_buffer_index = 0;
-
 
 /* Table with All the known Meta Data */
 MDM_knownGMD_t known_MetaData[]={
@@ -89,7 +82,6 @@ static volatile uint32_t t_stwin=               0;
 
 static volatile uint8_t  g_led_on           = 0;
 static volatile uint32_t g_acc_counter      = 0;
-// static volatile uint8_t  g_is_data_ready    = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
@@ -101,11 +93,6 @@ static void ReadMotionData(void);
 static void Enable_Inertial_Timer(void);
 static void MX_CRC_Init(void);
 
-// create a ring buffer for the IMU data
-static void ring_buffer_init(void);
-static void ring_buffer_add(int32_t *data);
-static void ring_buffer_print_all(void);
-
 // AI framework related functions
 static int aiInit(void);
 static int aiRun(const void *in_data, void *out_data);
@@ -114,33 +101,6 @@ static int aiPostProcessData(void *out_data);
 
 static int aiTestData(void *in_data, int index);
 /* Private functions ---------------------------------------------------------*/
-static void ring_buffer_init(void)
-{
-    _ring_buffer_index = 0;
-}
-
-
-static void ring_buffer_add(int32_t *data)
-{
-    for (int i = 0; i < 6; i++) {
-        _ring_buffer[_ring_buffer_index + i] = data[i];
-    }
-//     _PRINTF("%ld, %ld, %ld, %ld, %ld %ld\r\n",
-//             _ring_buffer[_ring_buffer_index], _ring_buffer[_ring_buffer_index + 1], _ring_buffer[_ring_buffer_index + 2],
-//             _ring_buffer[_ring_buffer_index + 3], _ring_buffer[_ring_buffer_index + 4], _ring_buffer[_ring_buffer_index + 5])
-    _ring_buffer_index = (_ring_buffer_index + 6) % RING_BUFFER_SIZE;
-}
-
-static void ring_buffer_print_all(void)
-{
-    int i;
-    _PRINTF("ring buffer: \r\n");
-    for (i = 0; i < RING_BUFFER_SIZE; i++) {
-        _PRINTF("%ld ", _ring_buffer[i]);
-    }
-    _PRINTF("\r\n (ring buffer size: %i)\r\n", RING_BUFFER_SIZE);
-    _PRINTF(" index: %lu\r\n", _ring_buffer_index);
-}
 
 static int aiInit(void) 
 {
@@ -2237,41 +2197,22 @@ static int aiAdquireAndProcessData(void *in_data)
     ai_float *data = (ai_float *)in_data;
     ai_float min[6] = {INT32_MAX, INT32_MAX, INT32_MAX, INT32_MAX, INT32_MAX, INT32_MAX};
     ai_float max[6] = {INT32_MIN, INT32_MIN, INT32_MIN, INT32_MIN, INT32_MIN, INT32_MIN};
-
-//     _PRINTF("Adquiring data...\r\n");
-    for (int i = 0; i < NUM_OF_SAMPLES; i ++) 
-    {
-        const int index = (_ring_buffer_index + i*6) % RING_BUFFER_SIZE;
-        const int32_t* value = &(_ring_buffer[index]);
-
-        for (int j = 0; j < 6; j++) 
-        {
-            data[i*6 + j] = (ai_float)(value[j]);
-            min[j] = MIN(min[j], data[i*6 + j]);
-            max[j] = MAX(max[j], data[i*6 + j]);
-        }
-        
-//         const int idx = i*6;
-//        _PRINTF("[> %i] %f %f %f %f %f %f\r\n ", i, data[idx], data[idx + 1], data[idx + 2], data[idx + 3], data[idx + 4], data[idx + 5]);
-    }
-
-//     _PRINTF("min: %f %f %f %f %f %f \r\n", min[0], min[1], min[2], min[3], min[4], min[5]);
-//     _PRINTF("max: %f %f %f %f %f %f \r\n", max[0], max[1], max[2], max[3], max[4], max[5]);
-
+    
     ai_float acc_min = min[0];
     ai_float acc_max = max[0];
     ai_float gyro_min = min[3];
     ai_float gyro_max = max[3];
 
-    acc_min = MIN(acc_min, min[1]);
-    acc_min = MIN(acc_min, min[2]);
-    acc_max = MAX(acc_max, max[1]);
-    acc_max = MAX(acc_max, max[2]);
+//     _PRINTF("Adquiring data...\r\n");
+    ring_buffer_read_data(data, NUM_OF_SAMPLES);
 
-    gyro_min = MIN(gyro_min, min[4]);
-    gyro_min = MIN(gyro_min, min[5]);
-    gyro_max = MAX(gyro_max, max[4]);
-    gyro_max = MAX(gyro_max, max[5]);
+    
+//     for( int i=0; i<NUM_OF_SAMPLES; i++ ) {
+//         _PRINTF("%f %f %f %f %f %f \r\n",data[i*6], data[i*6+1], data[i*6+2], data[i*6+3], data[i*6+4], data[i*6+5]);
+//     }
+
+    ring_buffer_get_min(&acc_min, &gyro_min);
+    ring_buffer_get_max(&acc_max, &gyro_max);
 
     min[0] = acc_min;
     min[1] = acc_min;
@@ -2289,7 +2230,7 @@ static int aiAdquireAndProcessData(void *in_data)
 
 //     _PRINTF("min: %f %f %f %f %f %f \r\n", min[0], min[1], min[2], min[3], min[4], min[5]);
 //     _PRINTF("max: %f %f %f %f %f %f \r\n", max[0], max[1], max[2], max[3], max[4], max[5]);
-// 
+//     
     // normalize the float array
 //     _PRINTF("Normalizing data...\r\n");
     for (int i = 0; i < NUM_OF_SAMPLES; i ++) 
@@ -2304,8 +2245,11 @@ static int aiAdquireAndProcessData(void *in_data)
                 data[idx + j] = (data[idx + j] - min[j]) / range;
             }
         }
+//         _PRINTF("%f %f %f %f %f %f\r\n ", data[idx], data[idx + 1], data[idx + 2], data[idx + 3], data[idx + 4], data[idx + 5]);
 //         _PRINTF("[> %i] %f %f %f %f %f %f\r\n ", i, data[idx], data[idx + 1], data[idx + 2], data[idx + 3], data[idx + 4], data[idx + 5]);
     }
+
+//     _PRINTF("%f %f %f %f %f %f \r\n",data[0],data[1],data[2],data[3],data[4],data[5]);
 
     return 0;
 
@@ -2390,25 +2334,25 @@ int main(void)
 
     /* Check the MetaDataManager */
     InitMetaDataManager((void *)&known_MetaData,MDM_DATA_TYPE_GMD,NULL); 
-
-    _PRINTF("\n\t(HAL %ld.%ld.%ld_%ld)\r\n"
-            "\tCompiled %s %s"
-
-#if defined (__IAR_SYSTEMS_ICC__)
-            " (IAR)\r\n"
-#elif defined (__CC_ARM)
-            " (KEIL)\r\n"
-#elif defined (__GNUC__)
-            " (STM32CubeIDE)\r\n"
-#endif
-            "\tSend Every %4dmS Acc/Gyro/Magneto\r\n",
-            HAL_GetHalVersion() >>24,
-            (HAL_GetHalVersion() >>16)&0xFF,
-            (HAL_GetHalVersion() >> 8)&0xFF,
-            HAL_GetHalVersion()      &0xFF,
-            __DATE__,__TIME__,
-            ALGO_PERIOD_ACC_GYRO_MAG);
-
+// 
+//     _PRINTF("\n\t(HAL %ld.%ld.%ld_%ld)\r\n"
+//             "\tCompiled %s %s"
+// 
+// #if defined (__IAR_SYSTEMS_ICC__)
+//             " (IAR)\r\n"
+// #elif defined (__CC_ARM)
+//             " (KEIL)\r\n"
+// #elif defined (__GNUC__)
+//             " (STM32CubeIDE)\r\n"
+// #endif
+//             "\tSend Every %4dmS Acc/Gyro/Magneto\r\n",
+//             HAL_GetHalVersion() >>24,
+//             (HAL_GetHalVersion() >>16)&0xFF,
+//             (HAL_GetHalVersion() >> 8)&0xFF,
+//             HAL_GetHalVersion()      &0xFF,
+//             __DATE__,__TIME__,
+//             ALGO_PERIOD_ACC_GYRO_MAG);
+// 
 
     HCI_TL_SPI_Reset();
 
@@ -2421,23 +2365,23 @@ int main(void)
     Enable_Inertial_Timer();   
 
 
-    for(int i=0; i < AI_MODEL_OUT_1_SIZE; i++)
-    {
-        _PRINTF("Testing label: %i \r\n", i);
-        aiTestData(in_data, i);
-        aiRun(in_data, out_data);
-        aiPostProcessData(out_data);
-    }
-    /* Infinite loop */
-//     while (1)
+//     for(int i=0; i < AI_MODEL_OUT_1_SIZE; i++)
 //     {
-//         
-//         if (WAIT_N_SAMPLES*3 == g_acc_counter){
-//             uint32_t tick_start  = 0;
-//             uint32_t tick_end    = 0;
-//             g_led_on ^= 1;
-//             g_acc_counter = 0;
-//             _PRINTF("--------------------\r\n");
+//         _PRINTF("Testing label: %i \r\n", i);
+//         aiTestData(in_data, i);
+//         aiRun(in_data, out_data);
+//         aiPostProcessData(out_data);
+//     }
+    /* Infinite loop */
+    while (1)
+    {
+        
+        if (WAIT_N_SAMPLES*3 == g_acc_counter){
+            uint32_t tick_start  = 0;
+            uint32_t tick_end    = 0;
+            g_led_on ^= 1;
+            g_acc_counter = 0;
+            _PRINTF("--------------------\r\n");
 //             _PRINTF("RUNNING AI MODEL\r\n");
 //             aiAdquireAndProcessData(in_data);
 //             tick_start  = HAL_GetTick();
@@ -2446,20 +2390,21 @@ int main(void)
 //             _PRINTF("inference time: %ld ms\r\n", tick_end - tick_start);
 //             aiPostProcessData(out_data);
 //             _PRINTF("MOVE NOWWWW!!!!!!\r\n");
-//         }
-// 
-//         if (g_is_data_ready){
-//             ReadMotionData();
-//         }
-// 
-//         if ( !g_led_on ) {
-//            LedOnTargetPlatform();
-//         }
-//         else{
-//             LedOffTargetPlatform();
-//         }
-// 
-//     }
+//
+                for( int i=0; i<NUM_OF_SAMPLES; i++ ) {
+                    _PRINTF("[%i]%f %f %f %f %f %f \r\n",i, in_data[i*6], in_data[i*6+1], in_data[i*6+2], in_data[i*6+3], in_data[i*6+4], in_data[i*6+5]);
+                }
+
+        }
+
+        if ( !g_led_on ) {
+           LedOnTargetPlatform();
+        }
+        else{
+            LedOffTargetPlatform();
+        }
+
+    }
 }
 
 static void MX_CRC_Init(void)
@@ -2513,7 +2458,8 @@ static void ReadMotionData(void)
     IMU_data[5] = GYR_Value.z;
 //         _PRINTF(", %ld, %ld, %ld \r\n", GYR_Value.x, GYR_Value.y, GYR_Value.z);;
 
-    ring_buffer_add(IMU_data);
+    ring_buffer_store_data(IMU_data);
+//     ring_buffer_add(IMU_data);
 //     ring_buffer_print_all();
 }
 
@@ -2535,7 +2481,7 @@ static void InitTimers(void)
     /* Compute the prescaler value to have TIM1 counter clock equal to 10 KHz */
     uwPrescalerValue = (uint32_t) ((SystemCoreClock / 10000) - 1); 
 
-    _PRINTF("system clock ----> %lu\r\n", SystemCoreClock);
+//     _PRINTF("system clock ----> %lu\r\n", SystemCoreClock);
 
     /* Set TIM1 instance ( Motion ) */
     TimCCHandle.Instance = TIM1;  
@@ -2736,6 +2682,7 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
         g_acc_counter++;
 //         g_is_data_ready = 1;
         ReadMotionData();
+        aiAdquireAndProcessData(in_data);
     }
 
 }

@@ -671,7 +671,7 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
         g_acc_counter++;
 //         g_is_data_ready = 1;
         ReadMotionData();
-        aiAdquireAndProcessData(in_data);
+//         aiAdquireAndProcessData(in_data);
     }
 
 }

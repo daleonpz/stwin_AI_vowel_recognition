@@ -16,7 +16,7 @@ IMAGE_NAME="ruby:2.5"
 LOCAL_WORKING_DIR=$(dirname "$(dirname "$(readlink -f "$0")")")
 DOCKER_WORKING_DIR="/home/myapp"
 
-COMMAND_TO_RUN_ON_DOCKER=(sh -c "gem install ceedling && cd test/ && ceedling clobber test:${TEST}")
+COMMAND_TO_RUN_ON_DOCKER=(sh -c "gem install ceedling && cd unittest/ && ceedling clobber test:${TEST}")
 
 
 echo "###############################"

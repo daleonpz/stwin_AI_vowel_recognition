@@ -40,6 +40,17 @@ def plot_two_vectors_side_by_side(vector1, vector2, title1, title2):
 
 
 # plot data in 2x3 subplots
+def plot_data_lin(macc, linacc, mgyro, lingyro):
+    fig, ax = plt.subplots(2, 2)
+    ax[0, 0].plot(macc)
+    ax[0, 1].plot(linacc)
+    ax[1, 0].plot(mgyro)
+    ax[1, 1].plot(lingyro)
+
+    plt.show()
+
+
+# plot data in 2x3 subplots
 def plot_data(macc, linacc, mgyro, lingyro):
     fig, ((ax1, ax2, ax3, ax4), (ax5, ax6, ax7, ax8)) = plt.subplots(2, 4)
     ax1.imshow(macc[:, :, 0])
@@ -52,13 +63,14 @@ def plot_data(macc, linacc, mgyro, lingyro):
     ax7.imshow(mgyro[:, :, 2])
     ax8.plot(lingyro)
 
+    plt.show()
 
     # show plot fullscreen
-    mng = plt.get_current_fig_manager()
-    mng.full_screen_toggle()
+#     mng = plt.get_current_fig_manager()
+#     mng.full_screen_toggle()
 #     mng.resize(*mng.window.maxsize())
 
-    plt.show(block=False)
+#     plt.show(block=False)
 
 # get moving average of a vector
 def get_moving_average(vector, window_size):
@@ -68,33 +80,46 @@ def get_moving_average(vector, window_size):
 # create a ring buffer class
 class RingBuffer:
     def __init__(self, size_max):
-        self.gyro = []
-        self.acc = []
+        self.gyro = [[0, 0, 0]] * size_max
+        self.acc = [[0, 0, 0]] * size_max
         self.size_max = size_max
-
-    class __Full:
-        def append(self, x):
-            self.acc[self.cur] = x[0:3]
-            self.gyro[self.cur] = x[3:6]
-            self.cur = (self.cur + 1) % self.size_max
-
-        def get(self):
-            """return the buffer in chronological order"""
-            return (
-                self.acc[self.cur :] + self.acc[: self.cur],
-                self.gyro[self.cur :] + self.gyro[: self.cur],
-            )
+        self.cur = 0
 
     def append(self, x):
-        self.acc.append(x[0:3])
-        self.gyro.append(x[3:6])
-        if len(self.gyro) == self.size_max:
-            self.cur = 0
-            self.__class__ = self.__Full
+        self.acc[self.cur] = x[0:3]
+        self.gyro[self.cur] = x[3:6]
+        self.cur = (self.cur + 1) % self.size_max
 
     def get(self):
-        return self.acc, self.gyro
-
+        """return the buffer in chronological order"""
+        return (
+            self.acc[self.cur :] + self.acc[: self.cur],
+            self.gyro[self.cur :] + self.gyro[: self.cur],
+        )
+# 
+#     class __Full:
+#         def append(self, x):
+#             self.acc[self.cur] = x[0:3]
+#             self.gyro[self.cur] = x[3:6]
+#             self.cur = (self.cur + 1) % self.size_max
+# 
+#         def get(self):
+#             """return the buffer in chronological order"""
+#             return (
+#                 self.acc[self.cur :] + self.acc[: self.cur],
+#                 self.gyro[self.cur :] + self.gyro[: self.cur],
+#             )
+# 
+#     def append(self, x):
+#         self.acc.append(x[0:3])
+#         self.gyro.append(x[3:6])
+#         if (len(self.gyro) == self.size_max) or (len(self.acc) == self.size_max):
+#             self.cur = 0
+#             self.__class__ = self.__Full
+# 
+#     def get(self):
+#         return self.acc, self.gyro
+# 
 
 # create a class to read the data from the serial port
 class SerialData:
@@ -139,61 +164,71 @@ class CurrentEstimate:
         self.gyro_bias = gyro
 
     def estimate_gyro_bias(self, gyro):
-        if norm(self.velocity) > 0.1:
+        if self.isMoving():
             return
         samples = 20
         # gyros = [oldest, ..., newest]
         self.gyro_bias = np.mean(gyro[-samples:], axis=0)
         print("gyro bias: ", self.gyro_bias)
 
-    def estimate_gravity_vector(self, acc):
-        samples = 100
+    def estimate_gravity_vector(self, acc, new_samples):
+        samples = np.min([100, new_samples])
         self.gravity_vector = np.mean(acc[-samples:], axis=0)
-        print("gravity vector: ", self.gravity_vector)
+#         print("gravity vector: ", self.gravity_vector)
 
-    def estimate_orientation(self, acc, gyro, new_samples):
-        if len(self.orientation) == 0:
-            self.orientation = normalize(acc[-1])
-            return
-
+    def estimate_orientation(self,  gyro, new_samples):
         dt = 1 / 200
 
         print("gyro length: ", len(gyro))
-        for i in range(new_samples):
+        for i in range(1, new_samples):
             self.orientation = self.orientation + dt * (gyro[-i] - self.gyro_bias)
-            self.orientation = normalize(self.orientation)
+#             self.orientation = normalize(self.orientation)
 
         print("orientation: ", self.orientation)
 
-    def estimate_velocity(self, acc, gyro, new_samples):
-        if len(self.velocity) == 0:
-            self.velocity = np.zeros(3)
-            return
-
+    def estimate_velocity(self, acc, new_samples):
+        self.estimate_gravity_vector(acc, new_samples)
         dt = 1 / 200
+        self.velocity = [0, 0, 0]
+        
+        # Due to the integral, we need to start at 1
 
-        for i in range(new_samples):
-            self.velocity = self.velocity + dt * (acc[-i] - self.gravity_vector)
+        for i in range(1, new_samples):
+            self.velocity = self.velocity + dt * (acc[i] - self.gravity_vector)
 
-        print("velocity: ", self.velocity)
 
-    def estimate_position(self, acc, gyro, new_samples):
-        if len(self.position) == 0:
-            self.position = np.zeros(3)
-            return
+        self.velocity /= new_samples # average velocity  is more reliable
 
-        dt = 1 / 200
+#         print(f'v: {self.velocity}')
+#         print(f'avg_v: {self.velocity/new_samples}')
+#         print(f'norm(avrg_v): {np.linalg.norm(self.velocity)/new_samples}')
+#             self.velocity = self.velocity + dt * (acc[-i] - self.gravity_vector)
+#             print(f'v: {self.velocity} a: {acc[-i]} g: {self.gravity_vector}')
 
-        for i in range(new_samples):
-            self.position = self.position + dt * self.velocity
-            self.position = self.position + 0.5 * dt * dt * (
-                acc[-i] - self.gravity_vector
-            )
-
-        print("position: ", self.position)
+#         print("velocity: ", self.velocity)
+# 
+#     def estimate_position(self, acc, new_samples):
+#         dt = 1 / 200
+#         self.position = [0, 0, 0]
+#         for i in range(new_samples):
+#             self.position = self.position + dt * self.velocity
+#             self.position = self.position + 0.5 * dt * dt * (
+#                 acc[-i] - self.gravity_vector
+#             )
+# 
+#         print("position: ", self.position)
 
     def get_estimate(self):
         return self.position, self.velocity, self.orientation
+
+
+    def isMoving(self):
+        if np.linalg.norm(self.velocity) > 0.1: # 1.0 for normal velocity, 0.1 for average velocity
+            print("norm: ", np.linalg.norm(self.velocity))
+            return True
+        else:
+            return False
+
 
 
 if __name__ == "__main__":
@@ -210,26 +245,54 @@ if __name__ == "__main__":
     sleep_time = 5
 
     time.sleep(sleep_time)  # to get enough data
-    n_samples = 196  # 196 number of samples in 1 second
+    n_samples = 400 # 196 number of samples in 1 second
     img_size = math.ceil(math.sqrt(n_samples))
 
+    print("Rdy? go!")
     while True:
-        ser.update()
-        acc, gyro = ser.get_last_n_samples(n_samples)
+        time.sleep(0.05)
+        new_samples = ser.update()
+#         print("new samples: ", new_samples)
+        acc, gyro = ser.get_last_n_samples(new_samples)
 
+        current_estimate.estimate_velocity(acc, new_samples)
+#         print("acc shape: ", np.shape(acc))
+        if current_estimate.isMoving() == False:
+            continue
+
+        print("I am moving")
+
+        # measure execution time 
+        start_time = time.time()
+        new_samples = 0
+        while( new_samples < n_samples):
+            new_samples += ser.update()
+#             print("new samples: ", new_samples)
+#             time.sleep(1)
+
+        stop_time = time.time()
+        print("time: ", stop_time - start_time)
+        print("show measurements")
+
+        acc, gyro = ser.get_last_n_samples(n_samples)
+        print("acc shape: ", np.shape(acc))
+        print("gyro shape: ", np.shape(gyro))
         acc = np.array(acc)
         gyro = np.array(gyro)
 
-        if len(acc) < n_samples:
-            time.sleep(sleep_time)
-            continue
+        
+#         if len(acc) < n_samples:
+#             time.sleep(sleep_time)
+#             continue
+# 
+        nacc = normalize_between_0_and_1(acc)
+        ngyro = normalize_between_0_and_1(gyro)
 
-        acc = normalize_between_0_and_1(acc)
-        gyro = normalize_between_0_and_1(gyro)
+        plot_data_lin(nacc, acc, ngyro, gyro)
 
-        nacc = acc.reshape(img_size, img_size, 3)
-        ngyro = gyro.reshape(img_size, img_size, 3)
-
-        plot_data(nacc, acc, ngyro, gyro)
-        plt.pause(sleep_time)
-        plt.close("all")
+        nacc = nacc.reshape(img_size, img_size, 3)
+        ngyro = ngyro.reshape(img_size, img_size, 3)
+# 
+#         plot_data(nacc, acc, ngyro, gyro)
+#         plt.pause(sleep_time)
+#         plt.close("all")

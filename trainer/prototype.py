@@ -1,4 +1,4 @@
-import collections
+import csv
 import math
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -6,7 +6,17 @@ import numpy as np
 import re
 import serial
 import time
+from tqdm import tqdm
+import torch
+import sys, getopt
 
+from modules.dataset import *
+from modules.train   import *
+from modules.utils   import *
+
+DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+NUM_SAMPLES = 400
+THRESHOLD = 0.8
 
 def normalize_between_0_and_1(data):
     flat_data = data.flatten()
@@ -147,8 +157,7 @@ if __name__ == "__main__":
     ser = SerialData()
     current_estimate = CurrentEstimate()
 
-    n_samples = 400 # 196 number of samples in 1 second
-    img_size = math.ceil(math.sqrt(n_samples))
+    img_size = math.ceil(math.sqrt(NUM_SAMPLES))
 
     print("Rdy? go!")
     while True:
@@ -167,7 +176,7 @@ if __name__ == "__main__":
         # measure execution time 
         start_time = time.time()
         new_samples = 0
-        while( new_samples < n_samples):
+        while( new_samples < NUM_SAMPLES):
             new_samples += ser.update()
 #             print("new samples: ", new_samples)
 #             time.sleep(1)
@@ -176,7 +185,7 @@ if __name__ == "__main__":
         print("time: ", stop_time - start_time)
         print("show measurements")
 
-        acc, gyro = ser.get_last_n_samples(n_samples)
+        acc, gyro = ser.get_last_n_samples(NUM_SAMPLES)
         print("acc shape: ", np.shape(acc))
         print("gyro shape: ", np.shape(gyro))
 

@@ -18,6 +18,29 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 NUM_SAMPLES = 400
 THRESHOLD = 0.8
 
+
+def get_label(img, model):
+    data = torch.from_numpy(img).float().to(DEVICE)
+    # add batch dimension
+    data = data.unsqueeze(0)
+    with torch.no_grad():
+        prediction = model(data)
+        # print prediction as float with 2 decimals
+#         np.set_printoptions(formatter={'float': lambda x: "{0:0.2f}".format(x)})
+#         np.set_printoptions(suppress=True)
+        print('Raw Prediction: ', np.around(prediction,3))
+        prediction = (prediction > THRESHOLD).float()
+        print('After thresholding: ', prediction)
+
+        if prediction.sum() == 0:
+            print('\t \t No prediction')
+            return np.array([99]) # no label
+
+        prediction = prediction.argmax(dim=1)
+
+        return prediction
+
+
 def normalize_between_0_and_1(data):
     flat_data = data.flatten()
 
@@ -58,30 +81,6 @@ class RingBuffer:
             self.acc[self.cur :] + self.acc[: self.cur],
             self.gyro[self.cur :] + self.gyro[: self.cur],
         )
-# 
-#     class __Full:
-#         def append(self, x):
-#             self.acc[self.cur] = x[0:3]
-#             self.gyro[self.cur] = x[3:6]
-#             self.cur = (self.cur + 1) % self.size_max
-# 
-#         def get(self):
-#             """return the buffer in chronological order"""
-#             return (
-#                 self.acc[self.cur :] + self.acc[: self.cur],
-#                 self.gyro[self.cur :] + self.gyro[: self.cur],
-#             )
-# 
-#     def append(self, x):
-#         self.acc.append(x[0:3])
-#         self.gyro.append(x[3:6])
-#         if (len(self.gyro) == self.size_max) or (len(self.acc) == self.size_max):
-#             self.cur = 0
-#             self.__class__ = self.__Full
-# 
-#     def get(self):
-#         return self.acc, self.gyro
-# 
 
 # create a class to read the data from the serial port
 class SerialData:
@@ -102,7 +101,7 @@ class SerialData:
             data = [float(s) for s in re.findall(r"-?\d+\.?\d*", i)]
             if len(data) == 6:
                 self.buffer.append(data)
-        #                 print(data)
+#                 print(data)
 
         return len(recent_data)
 
@@ -154,10 +153,21 @@ class CurrentEstimate:
 
 
 if __name__ == "__main__":
+    print(f'Using device: {DEVICE}')
     ser = SerialData()
     current_estimate = CurrentEstimate()
 
     img_size = math.ceil(math.sqrt(NUM_SAMPLES))
+
+    labels_map = get_labels_map()
+    reverse_labels_map = {v: k for k, v in labels_map.items()}
+
+    num_classes = len(labels_map)
+    model = get_model(num_classes, DEVICE)
+    print(model)
+    model.load_state_dict(torch.load('results/model.pth'))
+    model.eval()
+
 
     print("Rdy? go!")
     while True:
@@ -170,7 +180,7 @@ if __name__ == "__main__":
 #         print("acc shape: ", np.shape(acc))
         if current_estimate.isMoving() == False:
             continue
-
+        print('--------------------------------------')
         print("I am moving")
 
         # measure execution time 
@@ -183,17 +193,20 @@ if __name__ == "__main__":
 
         stop_time = time.time()
         print("time: ", stop_time - start_time)
-        print("show measurements")
+#         print("show measurements")
 
         acc, gyro = ser.get_last_n_samples(NUM_SAMPLES)
-        print("acc shape: ", np.shape(acc))
-        print("gyro shape: ", np.shape(gyro))
+#         print("acc shape: ", np.shape(acc))
+#         print("gyro shape: ", np.shape(gyro))
 
         nacc = normalize_between_0_and_1(acc)
         ngyro = normalize_between_0_and_1(gyro)
 
-        plot_data_lin(nacc, acc, ngyro, gyro)
+#         plot_data_lin(nacc, acc, ngyro, gyro)
 
-        nacc = nacc.reshape(img_size, img_size, 3)
-        ngyro = ngyro.reshape(img_size, img_size, 3)
+        data = np.concatenate((nacc, ngyro), axis=1)
+        data_img = data2image(data)
+        label = get_label(data_img, model)
+        if label[0] != 99:
+            print('Predicted label: ', reverse_labels_map[label[0].item()])
 

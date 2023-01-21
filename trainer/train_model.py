@@ -148,7 +148,7 @@ def main(dataset_path, num_epochs=10, batch_size=16, learning_rate=0.00001):
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     criterion = nn.CrossEntropyLoss()
 
-    train_ds, val_ds, test_ds = split_dataset(dataset, [0.8,0.1,0.1])
+    train_ds, val_ds, test_ds = split_dataset(dataset, [0.7,0.2,0.1])
 
     train_loader  = DataLoader(train_ds, batch_size = batch_size, shuffle=True)
     val_loader    = DataLoader(val_ds,   batch_size = batch_size, shuffle=False)

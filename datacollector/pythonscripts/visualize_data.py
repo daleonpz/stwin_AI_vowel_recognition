@@ -68,6 +68,7 @@ def main(argv):
         acc = data[:, 0:3]
         gyro = data[:, 3:6]
 
+        axes[i][0].plot(acc)
         ndata = normalize_acc_gyro(data)
         
         # 3-rd dimension are [acc_x, acc_y, acc_z, gyro_x, gyro_y, gyro_z]
@@ -86,7 +87,6 @@ def main(argv):
 
 
         # plot data
-        axes[i][0].plot(acc)
         axes[i][1].plot(ndata[:, 0:3])
         axes[i][2].imshow(nacc)
         axes[i][3].plot(ndata[:, 3:6])

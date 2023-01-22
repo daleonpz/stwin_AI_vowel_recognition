@@ -210,7 +210,7 @@ void ring_buffer_estimate_velocity(int32_t new_samples, float dt)
 
 int8_t ring_buffer_is_moving(int32_t new_samples)
 {
-    const float threshold = 0.1f;
+    const float threshold = 10.0f;
     float velocity_squared = current_velocity[0] * current_velocity[0] +
                              current_velocity[1] * current_velocity[1] +
                              current_velocity[2] * current_velocity[2];

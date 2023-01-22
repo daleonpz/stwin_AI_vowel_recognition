@@ -344,9 +344,9 @@ void test_ring_buffer_is_moving_true(void)
 
     float * velocity_ptr = ring_buffer_get_velocity();
 
-    velocity_ptr[0] = 1.1;
+    velocity_ptr[0] = 10.1;
     velocity_ptr[1] = 2.1;
-    velocity_ptr[2] = 0.1;
+    velocity_ptr[2] = 10.1;
 
     TEST_ASSERT_TRUE(ring_buffer_is_moving(3));
 }

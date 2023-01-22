@@ -30,8 +30,9 @@
 #include "ring_buffer.h"
 
 /* Private define ------------------------------------------------------------*/
-#define SAMPLES_PER_SEC     (1)   /* 1 sample per second */
-#define WAIT_N_SAMPLES      (FREQ_ACC_GYRO_MAG / SAMPLES_PER_SEC)  
+#define WAIT_N_SAMPLES      (10)//(FREQ_ACC_GYRO_MAG / SAMPLES_PER_SEC)  
+#define SAMPLES_PER_SEC     (FREQ_ACC_GYRO_MAG / WAIT_N_SAMPLES ) //(1)   /* 1 sample per second */
+#define DELTA_TIME          (1.0f / FREQ_ACC_GYRO_MAG) 
 #define NUM_OF_SAMPLES      (20*20)
 #define TENSOR_INPUT_SIZE   (NUM_OF_SAMPLES*6)
 #define INFERENCE_THRESHOLD (0.8)
@@ -353,7 +354,7 @@ int main(void)
 
     Enable_Inertial_Timer();   
 
-
+    _PRINTF("Start Application\r\n");
 //     for(int i=0; i < AI_MODEL_OUT_1_SIZE; i++)
 //     {
 //         _PRINTF("Testing label: %i \r\n", i);
@@ -364,27 +365,43 @@ int main(void)
     /* Infinite loop */
     while (1)
     {
-        
-        if (WAIT_N_SAMPLES*1 == g_acc_counter){
-            uint32_t tick_start  = 0;
-            uint32_t tick_end    = 0;
+       
+        if (WAIT_N_SAMPLES == g_acc_counter)
+        {
             g_led_on ^= 1;
             g_acc_counter = 0;
-            _PRINTF("--------------------\r\n");
-            _PRINTF("RUNNING AI MODEL\r\n");
-            aiAdquireAndProcessData(in_data);
-            tick_start  = HAL_GetTick();
-            aiRun(in_data, out_data);
-            tick_end    = HAL_GetTick();
-            _PRINTF("inference time: %ld ms\r\n", tick_end - tick_start);
-            aiPostProcessData(out_data);
-            _PRINTF("MOVE NOWWWW!!!!!!\r\n");
+            ring_buffer_estimate_velocity(WAIT_N_SAMPLES, DELTA_TIME);
+            if (ring_buffer_is_moving(WAIT_N_SAMPLES) )
+            {
+                _PRINTF("moving \r\n");
+//                 aiTestData(in_data, 0);
+//                 aiRun(in_data, out_data);
+//                 aiPostProcessData(out_data);
+            }
+        }
+
+
+// 
+//         if (WAIT_N_SAMPLES*1 == g_acc_counter){
+//             uint32_t tick_start  = 0;
+//             uint32_t tick_end    = 0;
+//             g_led_on ^= 1;
+//             g_acc_counter = 0;
+//             _PRINTF("--------------------\r\n");
+//             _PRINTF("RUNNING AI MODEL\r\n");
+//             aiAdquireAndProcessData(in_data);
+//             tick_start  = HAL_GetTick();
+//             aiRun(in_data, out_data);
+//             tick_end    = HAL_GetTick();
+//             _PRINTF("inference time: %ld ms\r\n", tick_end - tick_start);
+//             aiPostProcessData(out_data);
+//             _PRINTF("MOVE NOWWWW!!!!!!\r\n");
                 
 //             for( int i=0; i<NUM_OF_SAMPLES; i++ ) {
 //                     _PRINTF("[%i]%f %f %f %f %f %f \r\n",i, in_data[i*6], in_data[i*6+1], in_data[i*6+2], in_data[i*6+3], in_data[i*6+4], in_data[i*6+5]);
 //                 }
 
-        }
+//         }
 
         if ( !g_led_on ) {
            LedOnTargetPlatform();
@@ -669,9 +686,7 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
         /* Set the Capture Compare Register value (for Acc/Gyro/Mag sensor) */
         __HAL_TIM_SET_COMPARE(&TimCCHandle, TIM_CHANNEL_3, (uhCapture + uhCCR3_Val));
         g_acc_counter++;
-//         g_is_data_ready = 1;
         ReadMotionData();
-//         aiAdquireAndProcessData(in_data);
     }
 
 }

@@ -196,11 +196,11 @@ void ring_buffer_estimate_velocity(int32_t new_samples, float dt)
         current_velocity[1] += (y - gravity_y) * dt * friction_fudge;
         current_velocity[2] += (z - gravity_z) * dt * friction_fudge;
     }
-    _PRINTF("Gravity: %f %f %f \r\n", gravity_x, gravity_y, gravity_z);
-    _PRINTF("Velocity: %f, %f, %f\r\n", current_velocity[0], current_velocity[1], current_velocity[2]);
+//     _PRINTF("Gravity: %f %f %f \r\n", gravity_x, gravity_y, gravity_z);
+//     _PRINTF("Velocity: %f, %f, %f\r\n", current_velocity[0], current_velocity[1], current_velocity[2]);
 }
 
-int32_t ring_buffer_is_moving(int32_t new_samples)
+int8_t ring_buffer_is_moving(int32_t new_samples)
 {
     const float threshold = 0.1f;
     float velocity_squared = current_velocity[0] * current_velocity[0] +

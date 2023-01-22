@@ -319,10 +319,60 @@ void test_ring_buffer_estimate_velocity_simple()
     TEST_ASSERT_EQUAL_FLOAT( expected_velocity[2], velocity_ptr[2]);
 }
 
-void test_ring_buffer_is_moving(void)
+void test_ring_buffer_is_moving_true(void)
 {
     PRINT_TEST_HEADER;
+    float data[3][6] = { { 1, 2, 3, 4,  5,  6},
+                           { 0, 7, -8, -5, 2,  4},
+                           { 4, 5, 0, 7,  80, 9}
+    };
+
+    int32_t index = ring_buffer_get_index();
+    TEST_ASSERT_EQUAL_INT32 (0, index);
+
+    for (int i = 0; i < 3; i++)
+    {
+        ring_buffer_store_data(data[i]);
+    }
+
+    index = ring_buffer_get_index();
+    TEST_ASSERT_EQUAL_INT32 (3, index);
+
+    float * velocity_ptr = ring_buffer_get_velocity();
+
+    velocity_ptr[0] = 1.1;
+    velocity_ptr[1] = 2.1;
+    velocity_ptr[2] = 0.1;
+
+    TEST_ASSERT_TRUE(ring_buffer_is_moving(3));
 }
 
 
+void test_ring_buffer_is_moving_false(void)
+{
+    PRINT_TEST_HEADER;
+    float data[3][6] = { { 1, 2, 3, 4,  5,  6},
+                           { 0, 7, -8, -5, 2,  4},
+                           { 4, 5, 0, 7,  80, 9}
+    };
 
+    int32_t index = ring_buffer_get_index();
+    TEST_ASSERT_EQUAL_INT32 (0, index);
+
+    for (int i = 0; i < 3; i++)
+    {
+        ring_buffer_store_data(data[i]);
+    }
+
+    index = ring_buffer_get_index();
+    TEST_ASSERT_EQUAL_INT32 (3, index);
+
+    float * velocity_ptr = ring_buffer_get_velocity();
+
+    velocity_ptr[0] = 0.001;
+    velocity_ptr[1] = 0.001;
+    velocity_ptr[2] = 0.001;
+
+    TEST_ASSERT_FALSE(ring_buffer_is_moving(3));
+
+}

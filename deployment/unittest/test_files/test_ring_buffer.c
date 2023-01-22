@@ -201,5 +201,84 @@ void test_ring_buffer_get_min_max()
     TEST_ASSERT_EQUAL_FLOAT (8, max_acc);
     TEST_ASSERT_EQUAL_FLOAT (-5, min_gyro);
     TEST_ASSERT_EQUAL_FLOAT (80, max_gyro);
+}
+
+
+void test_ring_buffer_estimate_gravity_simple()
+{
+    PRINT_TEST_HEADER;
+    float data[3][6] = { { 1, 2, 3, 4,  5,  6},
+                           { 0, 7, -8, -5, 2,  4},
+                           { 4, 5, 0, 7,  80, 9}
+    };
+
+    int32_t index = ring_buffer_get_index();
+    TEST_ASSERT_EQUAL_INT32 (0, index);
+
+    for (int i = 0; i < 3; i++)
+    {
+        ring_buffer_store_data(data[i]);
+    }
+
+    index = ring_buffer_get_index();
+    TEST_ASSERT_EQUAL_INT32 (3, index);
+
+    ring_buffer_estimate_gravity(3);
+
+    float * gravity_ptr = ring_buffer_get_gravity();
+
+    TEST_ASSERT_EQUAL_FLOAT(5/3.0, gravity_ptr[0]);
+    TEST_ASSERT_EQUAL_FLOAT(14/3.0, gravity_ptr[1]);
+    TEST_ASSERT_EQUAL_FLOAT(-5/3.0, gravity_ptr[2]);
 
 }
+
+void test_ring_buffer_estimate_gravity_store_plus_2_and_read_5()
+{
+    PRINT_TEST_HEADER;
+    float data[RING_BUFFER_SIZE + 2][6] = {0};
+    for (int i = 0; i < RING_BUFFER_SIZE + 2; i++)
+    {
+        for (int j = 0; j < 6; j++)
+        {
+            data[i][j] = rand();
+        }
+    }
+
+    int32_t index = ring_buffer_get_index();
+    TEST_ASSERT_EQUAL_INT32 (0, index);
+
+    for (int i = 0; i < RING_BUFFER_SIZE + 2; i++)
+    {
+        ring_buffer_store_data(data[i]);
+    }
+
+    ring_buffer_estimate_gravity(5);
+
+    index = ring_buffer_get_index();
+    TEST_ASSERT_EQUAL_INT32 (2, index);
+
+    float * gravity_ptr = ring_buffer_get_gravity();
+
+    TEST_ASSERT_EQUAL_FLOAT((data[RING_BUFFER_SIZE + 1][0] + 
+                data[RING_BUFFER_SIZE][0] + 
+                data[RING_BUFFER_SIZE - 1][0] + 
+                data[RING_BUFFER_SIZE - 2][0] + 
+                data[RING_BUFFER_SIZE - 3][0])/5.0, 
+            gravity_ptr[0]);
+    TEST_ASSERT_EQUAL_FLOAT((data[RING_BUFFER_SIZE + 1][1] + 
+                data[RING_BUFFER_SIZE][1] + 
+                data[RING_BUFFER_SIZE - 1][1] + 
+                data[RING_BUFFER_SIZE - 2][1] + 
+                data[RING_BUFFER_SIZE - 3][1])/5.0,
+            gravity_ptr[1]);
+    TEST_ASSERT_EQUAL_FLOAT((data[RING_BUFFER_SIZE + 1][2] + 
+                data[RING_BUFFER_SIZE][2] + 
+                data[RING_BUFFER_SIZE - 1][2] + 
+                data[RING_BUFFER_SIZE - 2][2] + 
+                data[RING_BUFFER_SIZE - 3][2])/5.0, 
+            gravity_ptr[2]);
+
+}
+
+

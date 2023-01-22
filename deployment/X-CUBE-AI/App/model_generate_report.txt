@@ -1,5 +1,5 @@
 Neural Network Tools for STM32AI v1.6.0 (STM.ai v7.1.0-RC3)
-Created date          : 2023-01-18 20:20:38
+Created date          : 2023-01-22 17:28:34
 Parameters            : generate -m results/model.onnx --type onnx -o ../deployment/X-CUBE-AI/App --name model
 
 Exec/report summary (generate)
@@ -11,7 +11,7 @@ compression           : lossless
 workspace dir         : /home/me/Documents/git/mystuff/tinyml/stwin_AI_vowel_detection/trainer/stm32ai_ws
 output dir            : /home/me/Documents/git/mystuff/tinyml/stwin_AI_vowel_detection/deployment/X-CUBE-AI/App
 model_name            : model
-model_hash            : 107b10f43ef01e1940c45a5d7e3a1478
+model_hash            : 6b2dc5ccc40d92918b5afaa47f339fa1
 input 1/1             : 'input'
                         2400 items, 9.38 KiB, ai_float, float, (1,6,20,20), domain:user/
 output 1/1            : 'output'

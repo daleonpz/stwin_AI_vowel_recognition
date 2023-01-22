@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    model.c
   * @author  AST Embedded Analytics Research Platform
-  * @date    Wed Jan 18 20:20:37 2023
+  * @date    Sun Jan 22 17:28:34 2023
   * @brief   AI Tool Automatic Code Generator for Embedded NN computing
   ******************************************************************************
   * @attention
@@ -36,14 +36,14 @@
 #define AI_NET_OBJ_INSTANCE g_model
  
 #undef AI_MODEL_MODEL_SIGNATURE
-#define AI_MODEL_MODEL_SIGNATURE     "107b10f43ef01e1940c45a5d7e3a1478"
+#define AI_MODEL_MODEL_SIGNATURE     "6b2dc5ccc40d92918b5afaa47f339fa1"
 
 #ifndef AI_TOOLS_REVISION_ID
 #define AI_TOOLS_REVISION_ID     ""
 #endif
 
 #undef AI_TOOLS_DATE_TIME
-#define AI_TOOLS_DATE_TIME   "Wed Jan 18 20:20:37 2023"
+#define AI_TOOLS_DATE_TIME   "Sun Jan 22 17:28:34 2023"
 
 #undef AI_TOOLS_COMPILE_TIME
 #define AI_TOOLS_COMPILE_TIME    __DATE__ " " __TIME__

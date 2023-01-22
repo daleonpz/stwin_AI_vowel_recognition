@@ -278,7 +278,51 @@ void test_ring_buffer_estimate_gravity_store_plus_2_and_read_5()
                 data[RING_BUFFER_SIZE - 2][2] + 
                 data[RING_BUFFER_SIZE - 3][2])/5.0, 
             gravity_ptr[2]);
-
 }
+
+void test_ring_buffer_estimate_velocity_simple()
+{
+    PRINT_TEST_HEADER;
+
+    float data[3][6] = { { 1, 2, 3, 4,  5,  6},
+                           { 0, 7, -8, -5, 2,  4},
+                           { 4, 5, 0, 7,  80, 9}
+    };
+
+    int32_t index = ring_buffer_get_index();
+    TEST_ASSERT_EQUAL_INT32 (0, index);
+
+    for (int i = 0; i < 3; i++)
+    {
+        ring_buffer_store_data(data[i]);
+    }
+
+    index = ring_buffer_get_index();
+    TEST_ASSERT_EQUAL_INT32 (3, index);
+
+    ring_buffer_estimate_velocity(3, 1/200.0);
+
+    float * velocity_ptr = ring_buffer_get_velocity();
+
+    float * gravity_ptr = ring_buffer_get_gravity();
+
+    float expected_velocity[3] = {0};
+    expected_velocity[0] = ( data[0][0] - gravity_ptr[0] + data[1][0] - gravity_ptr[0] + data[2][0] - gravity_ptr[0] );
+    expected_velocity[0] = expected_velocity[0] * 1/200.0 * 0.98f;
+    expected_velocity[1] = ( data[0][1] - gravity_ptr[1] + data[1][1] - gravity_ptr[1] + data[2][1] - gravity_ptr[1] );
+    expected_velocity[1] = expected_velocity[1] * 1/200.0 * 0.98f;
+    expected_velocity[2] = ( data[0][2] - gravity_ptr[2] + data[1][2] - gravity_ptr[2] + data[2][2] - gravity_ptr[2] );
+    expected_velocity[2] = expected_velocity[2] * 1/200.0 * 0.98f;
+
+    TEST_ASSERT_EQUAL_FLOAT( expected_velocity[0], velocity_ptr[0]);
+    TEST_ASSERT_EQUAL_FLOAT( expected_velocity[1], velocity_ptr[1]);
+    TEST_ASSERT_EQUAL_FLOAT( expected_velocity[2], velocity_ptr[2]);
+}
+
+void test_ring_buffer_is_moving(void)
+{
+    PRINT_TEST_HEADER;
+}
+
 
 

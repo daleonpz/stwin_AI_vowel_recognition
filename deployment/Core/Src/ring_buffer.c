@@ -171,15 +171,22 @@ void ring_buffer_estimate_velocity(int32_t new_samples, float dt)
     ai_float new_data[size];
     ring_buffer_read_data(new_data, new_samples);
 
+    ring_buffer_estimate_gravity(new_samples);
     // initialize velocity to 0
     current_velocity[0] = 0.0f;
     current_velocity[1] = 0.0f;
     current_velocity[2] = 0.0f;
 
-    const float gravity_x = current_gravity[0];
-    const float gravity_y = current_gravity[1];
-    const float gravity_z = current_gravity[2];
-
+//     const float gravity_x = current_gravity[0];
+//     const float gravity_y = current_gravity[1];
+//     const float gravity_z = current_gravity[2];
+// 
+    // TODO: Assuming that the board is flat on the table, the gravity vector is
+    // pointing down. We can use this to estimate the velocity of the board.
+    //  in the future we can use the gyroscope to correct for the rotation of the board
+    const float gravity_x = 0.0f;
+    const float gravity_y = 0.0f;
+    const float gravity_z = 980.0f;
     const float friction_fudge = 0.98f;
 
     // integrate the acceleration to get the velocity
@@ -195,9 +202,10 @@ void ring_buffer_estimate_velocity(int32_t new_samples, float dt)
         current_velocity[0] += (x - gravity_x) * dt * friction_fudge;
         current_velocity[1] += (y - gravity_y) * dt * friction_fudge;
         current_velocity[2] += (z - gravity_z) * dt * friction_fudge;
+        _PRINTF("Velocity: %f, %f, %f\r\n", current_velocity[0], current_velocity[1], current_velocity[2]);
     }
-//     _PRINTF("Gravity: %f %f %f \r\n", gravity_x, gravity_y, gravity_z);
-//     _PRINTF("Velocity: %f, %f, %f\r\n", current_velocity[0], current_velocity[1], current_velocity[2]);
+    _PRINTF("Gravity: %f %f %f \r\n", gravity_x, gravity_y, gravity_z);
+    _PRINTF("Velocity: %f, %f, %f\r\n", current_velocity[0], current_velocity[1], current_velocity[2]);
 }
 
 int8_t ring_buffer_is_moving(int32_t new_samples)

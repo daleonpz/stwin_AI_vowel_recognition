@@ -2,6 +2,7 @@
 #define _RING_BUFFER_H_
 
 #include <stdint.h>
+#include <math.h>
 #ifndef TEST
 #include "model.h"
 #include "PREDMNT1_config.h"

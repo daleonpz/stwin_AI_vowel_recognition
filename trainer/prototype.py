@@ -131,20 +131,17 @@ class CurrentEstimate:
         dt = 1 / 200
         self.velocity = np.zeros(3)
 
-        # Due to the integral, we need to start at 1
+        # I assume that the board is always parallel to the ground
+        self.gravity_vector = np.array([0, 0, 980.0])
+        self.velocity = np.sum(acc[-new_samples:], axis=0) * dt - self.gravity_vector * dt * new_samples
 
-        for i in range(1, new_samples):
-            self.velocity = self.velocity + dt * (acc[i] - self.gravity_vector)
-
-
-        self.velocity /= new_samples # average velocity  is more reliable
 
     def get_estimate(self):
         return self.position, self.velocity, self.orientation
 
 
     def isMoving(self):
-        if np.linalg.norm(self.velocity) > 0.1: # 1.0 for normal velocity, 0.1 for average velocity
+        if np.linalg.norm(self.velocity) > 10.0: # 1.0 for normal velocity, 0.1 for average velocity
             print("norm: ", np.linalg.norm(self.velocity))
             return True
         else:

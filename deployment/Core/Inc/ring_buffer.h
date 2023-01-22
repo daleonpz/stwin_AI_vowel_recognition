@@ -32,7 +32,12 @@ void ring_buffer_init();
 void ring_buffer_print_buffer();
 void ring_buffer_get_min(ai_float* min_acc, ai_float* min_gyro);
 void ring_buffer_get_max(ai_float* max_acc, ai_float* max_gyro);
-void ring_buffer_estimate_velocity(int new_samples);
+void ring_buffer_estimate_velocity(int32_t new_samples, float dt);
+void ring_buffer_estimate_gravity(int32_t new_samples);
+int32_t ring_buffer_is_moving(int32_t new_samples);
+float * ring_buffer_get_gravity();
+float * ring_buffer_get_velocity();
+void ring_buffer_reset();
 
 #endif // _RING_BUFFER_H_
 

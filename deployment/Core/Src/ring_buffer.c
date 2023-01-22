@@ -16,17 +16,6 @@ static ai_float max_gyro = INT32_MIN;
 static float current_velocity[3] = {0.0f, 0.0f, 0.0f};
 static float current_gravity[3] = {0.0f, 0.0f, 0.0f};
 
-static float VectorMagnitude(const float* vec);
-
-static float VectorMagnitude(const float* vec) 
-{
-  const float x = vec[0];
-  const float y = vec[1];
-  const float z = vec[2];
-  return sqrtf((x * x) + (y * y) + (z * z));
-}
-
-
 
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -147,53 +136,98 @@ void ring_buffer_get_max(ai_float* _max_acc, ai_float* _max_gyro)
 }
 
 
-void ring_buffer_estimate_velocity(int new_samples)
+void ring_buffer_estimate_gravity(int32_t new_samples) 
 {
+    int32_t samples_to_average = MIN(new_samples, 100);
+    int32_t size = RING_BUFFER_ELEMENT_SIZE * samples_to_average;
+    ai_float new_data[size] ;
+    ring_buffer_read_data(new_data, samples_to_average);
+
+    current_gravity[0] = 0.0f;
+    current_gravity[1] = 0.0f;
+    current_gravity[2] = 0.0f;
+
+    float x_total = 0.0f;
+    float y_total = 0.0f;
+    float z_total = 0.0f;
+
+    for (int i = 0; i < samples_to_average; ++i) {
+        const ai_float* entry = &new_data[i * RING_BUFFER_ELEMENT_SIZE];
+        const float x = (float)entry[0];
+        const float y = (float)entry[1];
+        const float z = (float)entry[2];
+        x_total += x;
+        y_total += y;
+        z_total += z;
+    }
+    current_gravity[0] = x_total / samples_to_average;
+    current_gravity[1] = y_total / samples_to_average;
+    current_gravity[2] = z_total / samples_to_average;
+}
+
+void ring_buffer_estimate_velocity(int32_t new_samples, float dt)
+{
+    int32_t size = new_samples * RING_BUFFER_ELEMENT_SIZE;
+    ai_float new_data[size];
+    ring_buffer_read_data(new_data, new_samples);
+
+    // initialize velocity to 0
+    current_velocity[0] = 0.0f;
+    current_velocity[1] = 0.0f;
+    current_velocity[2] = 0.0f;
+
     const float gravity_x = current_gravity[0];
     const float gravity_y = current_gravity[1];
     const float gravity_z = current_gravity[2];
 
     const float friction_fudge = 0.98f;
 
-    int32_t i;
-    int32_t index = buffer_index;
-    int32_t count = new_samples;
-
-    if (new_samples > RING_BUFFER_SIZE)
+    // integrate the acceleration to get the velocity
+    // v = v + a * dt
+    // v = v + (a - g) * dt
+    // v = v + (a - g) * dt * friction_fudge
+    for(int32_t i=0; i < new_samples; i++)
     {
-        count = RING_BUFFER_SIZE;
+        const ai_float* entry = &new_data[i * RING_BUFFER_ELEMENT_SIZE];
+        const float x = (float)entry[0];
+        const float y = (float)entry[1];
+        const float z = (float)entry[2];
+        current_velocity[0] += (x - gravity_x) * dt * friction_fudge;
+        current_velocity[1] += (y - gravity_y) * dt * friction_fudge;
+        current_velocity[2] += (z - gravity_z) * dt * friction_fudge;
     }
-
-    for (i = 0; i < count; i++)
-    {
-        index = (index - 1 + RING_BUFFER_SIZE) % RING_BUFFER_SIZE;
-
-        const int32_t* entry = &buffer[index][0];
-        const float ax = (float)entry[0];
-        const float ay = (float)entry[1];
-        const float az = (float)entry[2];
-
-        // Try to remove gravity from the raw acceleration values.
-        const float ax_minus_gravity = ax - gravity_x;
-        const float ay_minus_gravity = ay - gravity_y;
-        const float az_minus_gravity = az - gravity_z;
-
-        // Update velocity based on the normalized acceleration.
-        current_velocity[0] += ax_minus_gravity;
-        current_velocity[1] += ay_minus_gravity;
-        current_velocity[2] += az_minus_gravity;
-
-        // Dampen the velocity slightly with a fudge factor to stop it exploding.
-        current_velocity[0] *= friction_fudge;
-        current_velocity[1] *= friction_fudge;
-        current_velocity[2] *= friction_fudge;
-
-    }
-
-    int32_t left_over = new_samples - count;
-    for (i = 0; i < left_over; i++)
-    {
-
-//         const float * entry =   &buffer[RING_BUFFER_SIZE - left_over + i][0];
-    }
+    _PRINTF("Gravity: %f %f %f \r\n", gravity_x, gravity_y, gravity_z);
+    _PRINTF("Velocity: %f, %f, %f\r\n", current_velocity[0], current_velocity[1], current_velocity[2]);
 }
+
+int32_t ring_buffer_is_moving(int32_t new_samples)
+{
+    const float threshold = 0.1f;
+    float velocity_squared = current_velocity[0] * current_velocity[0] +
+                             current_velocity[1] * current_velocity[1] +
+                             current_velocity[2] * current_velocity[2];
+
+    velocity_squared = sqrtf(velocity_squared);
+    _PRINTF("Velocity squared: %f\r\n", velocity_squared);
+    _PRINTF("\t  Average: %f\r\n", velocity_squared / new_samples);
+
+    return velocity_squared > threshold;
+}
+
+
+float * ring_buffer_get_gravity()
+{
+    return current_gravity;
+}
+
+float * ring_buffer_get_velocity()
+{
+    return current_velocity;
+}
+
+void ring_buffer_reset()
+{
+    ring_buffer_init();
+}
+
+

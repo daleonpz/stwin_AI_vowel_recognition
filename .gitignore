@@ -8,8 +8,5 @@ build/
 */pythonscripts/data/
 __pycache__/
 
-deployment/unittest/testbuild/test/cache/
-deployment/unittest/testbuild/test/out/
-deployment/unittest/testbuild/test/preprocess/files/
-deployment/unittest/testbuild/test/results/
+deployment/unittest/testbuild/
 

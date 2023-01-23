@@ -30,13 +30,13 @@
 #include "ring_buffer.h"
 
 /* Private define ------------------------------------------------------------*/
-#define WAIT_N_SAMPLES      (10)//(FREQ_ACC_GYRO_MAG / SAMPLES_PER_SEC)  
-#define SAMPLES_PER_SEC     (FREQ_ACC_GYRO_MAG / WAIT_N_SAMPLES ) //(1)   /* 1 sample per second */
+#define WAIT_N_SAMPLES      (10) 
+#define SAMPLES_PER_SEC     (FREQ_ACC_GYRO_MAG / WAIT_N_SAMPLES )
 #define DELTA_TIME          (1.0f / FREQ_ACC_GYRO_MAG) 
 #define NUM_OF_SAMPLES      (20*20)
 #define TENSOR_INPUT_SIZE   (NUM_OF_SAMPLES*6)
 #define INFERENCE_THRESHOLD (0.8)
-
+#define MOVE_THRESHOLD      (10.0f)
 /* Imported Variables -------------------------------------------------------------*/
 
 /* Exported Variables -------------------------------------------------------------*/
@@ -50,7 +50,6 @@ TIM_HandleTypeDef    TimCCHandle;
 uint32_t uhCCR1_Val = DEFAULT_uhCCR1_Val;
 uint32_t uhCCR2_Val = DEFAULT_uhCCR2_Val;
 uint32_t uhCCR3_Val = DEFAULT_uhCCR3_Val;
-// uint32_t uhCCR3_Val = ALGO_PERIOD_ACC_GYRO_MAG;//DEFAULT_uhCCR3_Val;
 uint32_t uhCCR4_Val = DEFAULT_uhCCR4_Val;
 
 uint8_t  NodeName[8];
@@ -100,20 +99,6 @@ static int aiRun(const void *in_data, void *out_data);
 static int aiAdquireAndProcessData(void *in_data);
 static int aiPostProcessData(void *out_data);
 
-// static int aiTestData(void *in_data, int index);
-
-// const ai_float *test_data[] = {test_data1, test_data2, test_data3, test_data4, test_data5};
-// 
-// static int aiTestData(void *in_data, int i)
-// {
-//     ai_float *data = (ai_float *)in_data;
-// 
-//     for (int j = 0; j < TENSOR_INPUT_SIZE; j++) {
-//         data[j] = test_data[i][j];
-//     }
-//     return 0;
-// }
-
 /* Private functions ---------------------------------------------------------*/
 
 static int aiInit(void) 
@@ -121,7 +106,6 @@ static int aiInit(void)
     ai_error err;
 
     /* Create and initialize the c-model */
-//     const ai_handle acts[] = { activations };
     
     err = ai_model_create(&model, AI_MODEL_DATA_CONFIG);
     if (err.type != AI_ERROR_NONE) {
@@ -143,13 +127,6 @@ static int aiInit(void)
         return -1;
     }
 
-//     err = ai_model_create_and_init(&model, acts, NULL);
-//     err = ai_model_create_and_init(&model, acts, weight);
-//     if (err.type != AI_ERROR_NONE) { 
-//         _PRINTF("ai_model_create_and_init failed. Error type: %d  code: %d \r\n", err.type, err.code);
-//         while(1);
-//     };
-// 
     /* Reteive pointers to the model's input/output tensors */
     ai_input    = ai_model_inputs_get(model, NULL);
     ai_output   = ai_model_outputs_get(model, NULL);
@@ -324,25 +301,25 @@ int main(void)
 
     /* Check the MetaDataManager */
     InitMetaDataManager((void *)&known_MetaData,MDM_DATA_TYPE_GMD,NULL); 
-// 
-//     _PRINTF("\n\t(HAL %ld.%ld.%ld_%ld)\r\n"
-//             "\tCompiled %s %s"
-// 
-// #if defined (__IAR_SYSTEMS_ICC__)
-//             " (IAR)\r\n"
-// #elif defined (__CC_ARM)
-//             " (KEIL)\r\n"
-// #elif defined (__GNUC__)
-//             " (STM32CubeIDE)\r\n"
-// #endif
-//             "\tSend Every %4dmS Acc/Gyro/Magneto\r\n",
-//             HAL_GetHalVersion() >>24,
-//             (HAL_GetHalVersion() >>16)&0xFF,
-//             (HAL_GetHalVersion() >> 8)&0xFF,
-//             HAL_GetHalVersion()      &0xFF,
-//             __DATE__,__TIME__,
-//             ALGO_PERIOD_ACC_GYRO_MAG);
-// 
+
+    _PRINTF("\n\t(HAL %ld.%ld.%ld_%ld)\r\n"
+            "\tCompiled %s %s"
+
+#if defined (__IAR_SYSTEMS_ICC__)
+            " (IAR)\r\n"
+#elif defined (__CC_ARM)
+            " (KEIL)\r\n"
+#elif defined (__GNUC__)
+            " (STM32CubeIDE)\r\n"
+#endif
+            "\tSend Every %4dmS Acc/Gyro/Magneto\r\n",
+            HAL_GetHalVersion() >>24,
+            (HAL_GetHalVersion() >>16)&0xFF,
+            (HAL_GetHalVersion() >> 8)&0xFF,
+            HAL_GetHalVersion()      &0xFF,
+            __DATE__,__TIME__,
+            ALGO_PERIOD_ACC_GYRO_MAG);
+
 
     HCI_TL_SPI_Reset();
 
@@ -355,61 +332,37 @@ int main(void)
     Enable_Inertial_Timer();   
 
     _PRINTF("Start Application\r\n");
-//     for(int i=0; i < AI_MODEL_OUT_1_SIZE; i++)
-//     {
-//         _PRINTF("Testing label: %i \r\n", i);
-//         aiTestData(in_data, i);
-//         aiRun(in_data, out_data);
-//         aiPostProcessData(out_data);
-//     }
+
     /* Infinite loop */
     while (1)
     {
        
         if (WAIT_N_SAMPLES == g_acc_counter)
         {
-            g_led_on ^= 1;
-            g_acc_counter = 0;
             ring_buffer_estimate_velocity(WAIT_N_SAMPLES, DELTA_TIME);
-            if (ring_buffer_is_moving(WAIT_N_SAMPLES) )
+            if (ring_buffer_is_moving(WAIT_N_SAMPLES, MOVE_THRESHOLD) )
             {
                 _PRINTF("moving \r\n");
-//                 aiTestData(in_data, 0);
-//                 aiRun(in_data, out_data);
-//                 aiPostProcessData(out_data);
+                LedOnTargetPlatform();
+                g_acc_counter = 0;
+                while( NUM_OF_SAMPLES > g_acc_counter )
+                {
+                    HAL_Delay(100); // 100ms
+                }
+                uint32_t tick_start  = 0;
+                uint32_t tick_end    = 0;
+                g_acc_counter = 0;
+                _PRINTF("RUNNING AI MODEL\r\n");
+                aiAdquireAndProcessData(in_data);
+                tick_start  = HAL_GetTick();
+                aiRun(in_data, out_data);
+                tick_end    = HAL_GetTick();
+                _PRINTF("inference time: %ld ms\r\n", tick_end - tick_start);
+                aiPostProcessData(out_data);
+                LedOffTargetPlatform();
             }
+            g_acc_counter = 0;
         }
-
-
-// 
-//         if (WAIT_N_SAMPLES*1 == g_acc_counter){
-//             uint32_t tick_start  = 0;
-//             uint32_t tick_end    = 0;
-//             g_led_on ^= 1;
-//             g_acc_counter = 0;
-//             _PRINTF("--------------------\r\n");
-//             _PRINTF("RUNNING AI MODEL\r\n");
-//             aiAdquireAndProcessData(in_data);
-//             tick_start  = HAL_GetTick();
-//             aiRun(in_data, out_data);
-//             tick_end    = HAL_GetTick();
-//             _PRINTF("inference time: %ld ms\r\n", tick_end - tick_start);
-//             aiPostProcessData(out_data);
-//             _PRINTF("MOVE NOWWWW!!!!!!\r\n");
-                
-//             for( int i=0; i<NUM_OF_SAMPLES; i++ ) {
-//                     _PRINTF("[%i]%f %f %f %f %f %f \r\n",i, in_data[i*6], in_data[i*6+1], in_data[i*6+2], in_data[i*6+3], in_data[i*6+4], in_data[i*6+5]);
-//                 }
-
-//         }
-
-        if ( !g_led_on ) {
-           LedOnTargetPlatform();
-        }
-        else{
-            LedOffTargetPlatform();
-        }
-
     }
 }
 
@@ -427,7 +380,7 @@ static void MX_CRC_Init(void)
     }
 }
 /**
- * @brief  Send Motion Data Acc/Mag/Gyro to BLE
+ * @brief  ReadMotionData function is used to read the Acc/Gyro/Magneto data
  * @param  None
  * @retval None
  */
@@ -465,8 +418,6 @@ static void ReadMotionData(void)
 //         _PRINTF(", %ld, %ld, %ld \r\n", GYR_Value.x, GYR_Value.y, GYR_Value.z);;
 
     ring_buffer_store_data(IMU_data);
-//     ring_buffer_add(IMU_data);
-//     ring_buffer_print_all();
 }
 
 

@@ -348,7 +348,9 @@ void test_ring_buffer_is_moving_true(void)
     velocity_ptr[1] = 2.1;
     velocity_ptr[2] = 10.1;
 
-    TEST_ASSERT_TRUE(ring_buffer_is_moving(3));
+    const float threshold = 10.0;
+
+    TEST_ASSERT_TRUE(ring_buffer_is_moving(3, threshold));
 }
 
 
@@ -377,6 +379,8 @@ void test_ring_buffer_is_moving_false(void)
     velocity_ptr[1] = 0.001;
     velocity_ptr[2] = 0.001;
 
-    TEST_ASSERT_FALSE(ring_buffer_is_moving(3));
+    const float threshold = 10.0;
+
+    TEST_ASSERT_FALSE(ring_buffer_is_moving(3, threshold));
 
 }

@@ -72,10 +72,10 @@ def get_confusion_matrix(model, test_loader, device, criterion):
                 y_true.append(test_labels[i].item())
                 y_pred.append(pred[i].item())
 
-                if test_labels[i].item() == pred[i].item():
-                    _temp = test_data[i].cpu().numpy()
-                    _temp = np.reshape(_temp, (400, 6))
-                    np.savetxt(f'correct_{test_labels[i].item()}.csv', _temp, delimiter=',')
+#                 if test_labels[i].item() == pred[i].item():
+#                     _temp = test_data[i].cpu().numpy()
+#                     _temp = np.reshape(_temp, (400, 6))
+#                     np.savetxt(f'correct_{test_labels[i].item()}.csv', _temp, delimiter=',')
 
     print(f'true_labels {y_true}')
     print(f'pred_labels {y_pred}')

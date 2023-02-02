@@ -9,4 +9,4 @@ build/
 __pycache__/
 
 deployment/unittest/testbuild/
-
+.python-version

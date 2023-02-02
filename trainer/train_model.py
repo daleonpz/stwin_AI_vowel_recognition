@@ -134,7 +134,7 @@ def log_results(model, num_epochs, batch_size, learning_rate, optimizer, criteri
 
         mlflow.log_metric("test_loss", test_loss)
         mlflow.log_metric("test_acc", test_acc)
-#         mlflow.log_param("confusion_matrix", cm)
+        mlflow.log_artifact('results/plot.png')
 
 def plot_results(cm, dict_log, epochs, len):
     x_val = np.arange(1, epochs+1)

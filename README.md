@@ -1,7 +1,7 @@
 # Introduction
 The objective of this project was to train a neural network for **vowel recognition** based on **Inertial Movement Unit (IMU)** measurements and deploy it on the dev board [STEVAL-STWINKT1](https://www.st.com/en/evaluation-tools/steval-stwinkt1.html) from STM32.
 
-The neural network is based on two layers of CNN + BN + ReLU, a Global Average Pooling layers and a Fully Connected + Softmax layer. The size of the neural network is **13KB**, and has **85% accuracy on the testset**. 
+The neural network is based on two layers of CNN + BN + ReLU, a Global Average Pooling layers and a Fully Connected + Softmax layer. The size of the neural network is **13KB**, and has **95% accuracy on the testset**. 
 
 Workflow overview:
 

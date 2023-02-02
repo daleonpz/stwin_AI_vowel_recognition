@@ -10,6 +10,7 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
+import mlflow
 
 from torch.utils.data import DataLoader
 
@@ -52,6 +53,8 @@ def test(model, test_loader, device, criterion):
               val_loader=test_loader, 
               device=DEVICE)
     print(f'Test: acc {test_acc} \t  loss {test_loss}')
+
+    return test_loss, test_acc
 
 def get_confusion_matrix(model, test_loader, device, criterion):
     y_pred = []
@@ -99,6 +102,39 @@ def acc_plot(title):
     plt.xlabel("Epochs")
     plt.axhline(y=90, color='red', label="Acceptable accuracy")
     plt.ylabel("Accuracy")
+
+def log_results(model, num_epochs, batch_size, learning_rate, optimizer, criterion, train_size, test_size, val_size, test_loss, test_acc, cm, dict_log):
+    with mlflow.start_run():
+        mlflow.pytorch.log_model(model, "model")
+
+        mlflow.log_param("num_epochs", num_epochs)
+        mlflow.log_param("batch_size", batch_size)
+        mlflow.log_param("learning_rate", learning_rate)
+        mlflow.log_param("optimizer", optimizer)
+        mlflow.log_param("criterion", criterion)
+        mlflow.log_param("train_size", train_size)
+        mlflow.log_param("test_size", test_size) 
+        mlflow.log_param("val_size", val_size) 
+
+        train_loss = dict_log['train_loss_hist']
+        train_acc  = dict_log['train_acc_hist']
+        val_loss   = dict_log['val_loss_hist']
+        val_acc    = dict_log['val_acc_hist']
+
+        for i in range(len(train_loss)):
+            mlflow.log_metric("train_loss", train_loss[i], step=i)
+            mlflow.log_metric("train_acc", train_acc[i], step=i)
+            mlflow.log_metric("val_loss", val_loss[i], step=i)
+            mlflow.log_metric("val_acc", val_acc[i], step=i)
+
+    #     mlflow.log_metric("train_loss", dict_log['train_loss_hist'])
+    #     mlflow.log_metric("train_acc", dict_log['train_acc_hist'])
+    #     mlflow.log_metric("val_loss", dict_log['val_loss_hist'])
+    #     mlflow.log_metric("val_acc", dict_log['val_acc_hist'])
+
+        mlflow.log_metric("test_loss", test_loss)
+        mlflow.log_metric("test_acc", test_acc)
+#         mlflow.log_param("confusion_matrix", cm)
 
 def plot_results(cm, dict_log, epochs, len):
     x_val = np.arange(1, epochs+1)
@@ -190,7 +226,18 @@ def main(dataset_path, num_epochs=10, batch_size=16, learning_rate=0.00001):
 
     plot_results(cm, dict_log, num_epochs, len(train_loader))
 
-    test(model, test_loader, DEVICE, criterion)
+    test_loss, test_acc = test(model, test_loader, DEVICE, criterion)
+
+    log_results(model, 
+               num_epochs, 
+               batch_size, 
+               learning_rate, 
+               optimizer, 
+               criterion, 
+               len(train_ds), len(test_ds), len(val_ds), 
+               test_loss, test_acc, 
+               cm,
+                dict_log)
 
     torch.save(model.state_dict(), 'results/model.pth')
 

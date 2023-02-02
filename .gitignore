@@ -11,3 +11,4 @@ __pycache__/
 deployment/unittest/testbuild/
 .python-version
 /data
+trainer/envelope.tex

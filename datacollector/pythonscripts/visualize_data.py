@@ -1,3 +1,4 @@
+import argparse
 import sys
 import os
 import numpy as np
@@ -36,22 +37,25 @@ def normalize_acc_gyro(data):
     return data
 
 
-def main(argv):
+def main(args):
     # read data from argument
-    path = sys.argv[1]
-    files = os.listdir(path)
-    
-    img_size = 20
-    number_of_files = 1
-    if len(sys.argv) > 2:
-        number_of_files = int(sys.argv[2])
+    path = args.path
+    number_of_files = args.number_of_files
+    one_file = args.one_file
 
-    # select 15 files randomly
-    files = np.random.choice(files, number_of_files, replace=False)
+    img_size = 20
+
+    if one_file:
+        number_of_files = 2
+        files = [path]
+
+    else:
+        # select 15 files randomly
+        files = os.listdir(path)
+        files = np.random.choice(files, number_of_files, replace=False)
 
     # create a subplot row for each file
     fig, axes = plt.subplots(number_of_files, 5)
-
 
     fig.suptitle(f'{path}', fontsize=16)
     axes[0, 0].set_title('Accelerometer original')
@@ -63,7 +67,10 @@ def main(argv):
     for i, file in enumerate(files):
         # read data
         print(f'Reading file {file}')
-        data = np.loadtxt(path + file, delimiter=',')
+        if one_file:
+            data = np.loadtxt(path, delimiter=',')
+        else:
+            data = np.loadtxt(os.path.join(path, file), delimiter=',')
 
         acc = data[:, 0:3]
         gyro = data[:, 3:6]
@@ -85,7 +92,6 @@ def main(argv):
         nacc = ndata_image[:,:,0:3]
         ngyro = ndata_image[:,:,3:6]
 
-
         # plot data
         axes[i][1].plot(ndata[:, 0:3])
         axes[i][2].imshow(nacc)
@@ -95,4 +101,12 @@ def main(argv):
     plt.show()
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    # parse arguments
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('--path', help='Path to the data')
+    argparser.add_argument('--number_of_files', help='Number of files to visualize', default=5, type=int)
+    argparser.add_argument('--one_file', help='Visualize only one file', default=False, type=bool)
+    args = argparser.parse_args()
+
+    main(args)
+

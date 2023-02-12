@@ -165,7 +165,7 @@ def plot_results(cm, dict_log, epochs, len):
     plt.show()
 
 
-def main(dataset_path, num_epochs=10, batch_size=16, learning_rate=0.00001):
+def main(dataset_path, num_epochs=10, batch_size=16, learning_rate=0.00001, debug=False):
     logging.getLogger('models.cnn').setLevel(logging.INFO)
 #     logging.getLogger('models.cnn_2').setLevel(logging.DEBUG)
     logging.getLogger('modules.dataset').setLevel(logging.INFO)
@@ -228,16 +228,17 @@ def main(dataset_path, num_epochs=10, batch_size=16, learning_rate=0.00001):
 
     test_loss, test_acc = test(model, test_loader, DEVICE, criterion)
 
-    log_results(model, 
-               num_epochs, 
-               batch_size, 
-               learning_rate, 
-               optimizer, 
-               criterion, 
-               len(train_ds), len(test_ds), len(val_ds), 
-               test_loss, test_acc, 
-               cm,
-                dict_log)
+    if debug==False:
+        log_results(model, 
+                   num_epochs, 
+                   batch_size, 
+                   learning_rate, 
+                   optimizer, 
+                   criterion, 
+                   len(train_ds), len(test_ds), len(val_ds), 
+                   test_loss, test_acc, 
+                   cm,
+                    dict_log)
 
     torch.save(model.state_dict(), 'results/model.pth')
 
@@ -252,8 +253,9 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', type=int, default=10)
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--learning_rate', type=float, default=0.00001)
+    parser.add_argument('--debug', type=bool, default=False)
 
     print(parser.parse_args())
     args = parser.parse_args()
-    main(args.dataset_path, args.num_epochs, args.batch_size, args.learning_rate)
+    main(args.dataset_path, args.num_epochs, args.batch_size, args.learning_rate, args.debug)
 

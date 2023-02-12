@@ -1,155 +1,147 @@
-import serial
-import re
-import time
-import sys, getopt
+import argparse
 import csv
-import numpy as np
 import math
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import numpy as np
+import re
+import serial
+import time
 from tqdm import tqdm
+import torch
+import sys, getopt
 
-def normalize_columns_between_0_and_1(matrix):
-    mmin = np.min(matrix, axis=0)
-    mmax = np.max(matrix, axis=0)
-    matrix = matrix - mmin
-    matrix = matrix / (mmax - mmin)
-    return matrix
+NUM_SAMPLES = 400
 
-def plot_data(mdata, lindata):
-    fig, ((ax1, ax2, ax3, ax4), (ax5, ax6, ax7, ax8)) = plt.subplots(2, 4)
-    ax1.imshow(mdata[:, :, 0])
-    ax2.imshow(mdata[:, :, 1])
-    ax3.imshow(mdata[:, :, 2])
-    ax4.imshow(mdata)
+# create a ring buffer class
+class RingBuffer:
+    def __init__(self, size_max):
+        self.gyro = [[0, 0, 0]] * size_max
+        self.acc = [[0, 0, 0]] * size_max
+        self.size_max = size_max
+        self.cur = 0
 
-    ax5.plot(lindata[:, 0])
-    ax6.plot(lindata[:, 1])
-    ax7.plot(lindata[:, 2])
+    def append(self, x):
+        self.acc[self.cur] = x[0:3]
+        self.gyro[self.cur] = x[3:6]
+        self.cur = (self.cur + 1) % self.size_max
 
-    # show plot fullscreen
-    mng = plt.get_current_fig_manager()
-    mng.full_screen_toggle()
-    plt.show()
+    def get(self):
+        """return the buffer in chronological order"""
+        return (
+            self.acc[self.cur :] + self.acc[: self.cur],
+            self.gyro[self.cur :] + self.gyro[: self.cur],
+        )
 
+# create a class to read the data from the serial port
+class SerialData:
+    def __init__(self, serial_port="/dev/ttyACM0", serial_baud=115200):
+        self.ser = serial.Serial(serial_port, serial_baud)
+        self.buffer = RingBuffer(1000)
 
-class serialCollector:
-    def __init__(self, 
-            serialPort = '/dev/ttyACM0', serialBaud = 115200,
-            sample_freq = 200, sampling_time_sec = 2, 
-            csv_filename = 'data.csv', label = 'A'):
-        self.port = serialPort
-        self.baud = serialBaud
-        self.sample_freq = sample_freq 
-        self.sampling_time_sec  = sampling_time_sec
-        self.csv_filename = csv_filename
-        self.label = label
+    def update(self):
+        data = []
+        buffer = []
+        while len(buffer) < 6:
+            buffer = self.ser.read(self.ser.inWaiting())
 
-        print('serialCollector:  serialPort = {}, serialBaud = {}, sample_freq = {}, sampling_time_sec = {},  csv_filename = {}, \
-                label = {}'.format(serialPort, serialBaud, sample_freq, sampling_time_sec, csv_filename, label))
-
-        print('Trying to connect to: ' + str(serialPort) + ' at ' + str(serialBaud) + ' BAUD.')
-        try:
-            self.serialConnection = serial.Serial(serialPort, serialBaud, timeout=4)
-            print('Connected to ' + str(serialPort) + ' at ' + str(serialBaud) + ' BAUD.')
-        except:
-            print("Failed to connect with " + str(serialPort) + ' at ' + str(serialBaud) + ' BAUD.')
-            sys.exit(1)
-
-    def readSerialStart(self):
+        recent_data = buffer.decode("utf-8").splitlines()
 
         data = []
-        while (len(data) != 6 ):
-            raw_data = self.serialConnection.readline().decode('utf-8')
-            data = [float(s) for s in re.findall(r'-?\d+\.?\d*', raw_data)]
-            print("waiting for a good reading...")
-        
-        with open(self.csv_filename, 'w', newline='') as file:
-            print(f'label: {self.label}')
-            print('be prepare in 1 sec')
-            time.sleep(1)
-            print('start now')
-            writer = csv.writer(file)
-            if isMoving():
-                for x in tqdm(range(0, self.sampling_time_sec  * self.sample_freq )):
-                    for attempt in range(0, 10):
-                        raw_data = self.serialConnection.readline().decode('utf-8')
-                        data = [float(s) for s in re.findall(r'-?\d+\.?\d*', raw_data)]
-                        if (len(data) != 6):
-                            print("data error, new try...")
-                            continue
-                        else:
-                            break
+        for i in recent_data:
+            data = [float(s) for s in re.findall(r"-?\d+\.?\d*", i)]
+            if len(data) == 6:
+                self.buffer.append(data)
+#                 print(data)
 
-                    writer.writerow(data)
+        return len(recent_data)
 
-    def close(self):
-        self.serialConnection.close()
-        print('Disconnected...')
+    def get_buffer(self):
+        return self.buffer.get()
+
+    def get_last_n_samples(self, n):
+        acc, gyro = self.buffer.get()
+        acc = np.array(acc)
+        gyro = np.array(gyro)
+
+        return acc[-n:], gyro[-n:]
 
 
-def main(argv):
-
-    portName = '/dev/ttyACM0'
-    baudRate = 115200 
-    sample_freq = 200
-    sampling_time_sec = 2
-    csv_filename = "test.csv"
-    label = 'A'
-    debug = False
-
-    try:
-        opts, args = getopt.getopt(argv,"p:b:f:s:F:l:d:",["port=",
-             "baudrate=", "sample_freq=", "sample_duration_sec=", "csv_filename=", "label=", "debug="])
-    except getopt.GetoptError:
-        print('collect_data.py -d <csv_filename>')
-        sys.exit(2)
+class CurrentEstimate:
+    def __init__(self):
+        self.gravity_vector = np.array([0.0,0.0,0.0])
+        self.velocity = np.array([0, 0, 0])
+        self.ser = SerialData()
     
-    for opt, arg in opts:
-        if opt == '-h':
-            print('collect_data.py -d <csv_filename>')
-            sys.exit()
-        elif opt in ("-p", "--port"):
-            portName  = arg
-        elif opt in ("-b", "--baudrate"):
-            baudrate = arg
-        elif opt in ("-f", "--sample_freq"):
-            sample_freq = arg
-        elif opt in ("-s", "--sample_duration_sec"):
-            sampling_time_sec = arg
-        elif opt in ("-F", "--csv_filename"):
-            csv_filename = arg
-        elif opt in ("-l", "--label"):
-            label = arg
-        elif opt in ("-d", "--debug"):
-            debug = arg
+    def estimate_gravity_vector(self, acc, new_samples):
+        samples = np.min([100, new_samples])
+        self.gravity_vector = np.mean(acc[-samples:], axis=0)
+#         print("gravity vector: ", self.gravity_vector)
 
-    s = serialCollector(portName, baudRate, sample_freq, sampling_time_sec, csv_filename, label)
-    s.readSerialStart()
-    s.close()
+    def estimate_velocity(self, acc, new_samples):
+        self.estimate_gravity_vector(acc, new_samples)
+        dt = 1 / 200
+        self.velocity = np.zeros(3)
 
-    if debug:
-       # read the data from the csv file into a numpy array
-        data = np.genfromtxt(csv_filename, delimiter=',')
+        # I assume that the board is always parallel to the ground
+        self.gravity_vector = np.array([0, 0, 980.0])
+        self.velocity = np.sum(acc[-new_samples:], axis=0) * dt - self.gravity_vector * dt * new_samples
 
-        acc = data[:, 0:3]
-        gyro = data[:, 3:6]
+    def get_estimate(self):
+        return self.position, self.velocity, self.orientation
 
-        print(len(acc))
-        if len(acc) <  sample_freq * sampling_time_sec:
-            print("not enough data")
-            return
+    def isMoving(self):
+        time.sleep(0.05)
+        new_samples = self.ser.update()
+        acc, gyro  = self.ser.get_last_n_samples(new_samples)
+        self.estimate_velocity(acc, new_samples)
 
-        nacc = normalize_columns_between_0_and_1(acc)
-        ngyro = normalize_columns_between_0_and_1(gyro)
-
-        img_size = math.ceil(math.sqrt(len(acc)))
-
-        print("nacc.shape: ", nacc.shape)
-        nacc = nacc.reshape(img_size, img_size, 3)
-        print("nacc.shape: ", nacc.shape)
-
-        ngyro = ngyro.reshape(img_size, img_size, 3)
-        plot_data(nacc, acc)
+        if np.linalg.norm(self.velocity) > 10.0: # 1.0 for normal velocity, 0.1 for average velocity
+            print("norm: ", np.linalg.norm(self.velocity))
+            return True
+        else:
+            return False
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+
+    # read arguments from terminal file and label
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--label', type=str,  default='A')
+    parser.add_argument('--samples', type=int, default=20)
+
+    args = parser.parse_args()
+
+    current_estimate = CurrentEstimate()
+
+    # create files following this pattern  label_0001.csv, label_0002.csv, ... using a for loop
+    for i in tqdm(range(args.samples)):
+        # create a new file
+        filename = args.label + '_' + str(i).zfill(4) + '.csv'
+        print(f'{filename} is being created')
+
+        # wait for the board to be still
+        while current_estimate.isMoving():
+            pass
+
+        print("Board is still")
+
+        while current_estimate.isMoving() == False:
+            pass
+
+        print("Board is moving")
+
+
+        # when is not moving start reading all the values
+        new_samples = 0
+        while( new_samples < NUM_SAMPLES):
+            new_samples += current_estimate.ser.update()
+
+        acc, gyro = current_estimate.ser.get_last_n_samples(NUM_SAMPLES)
+        data = np.concatenate((acc, gyro), axis=1)
+
+        print(f'data shape: {data.shape}')
+
+        with open(filename, 'w') as f:
+            np.savetxt(f, data, delimiter=",")
+            print(f'{filename} is saved')
+

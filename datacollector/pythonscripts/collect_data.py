@@ -69,17 +69,18 @@ class serialCollector:
             time.sleep(1)
             print('start now')
             writer = csv.writer(file)
-            for x in tqdm(range(0, self.sampling_time_sec  * self.sample_freq )):
-                for attempt in range(0, 10):
-                    raw_data = self.serialConnection.readline().decode('utf-8')
-                    data = [float(s) for s in re.findall(r'-?\d+\.?\d*', raw_data)]
-                    if (len(data) != 6):
-                        print("data error, new try...")
-                        continue
-                    else:
-                        break
+            if isMoving():
+                for x in tqdm(range(0, self.sampling_time_sec  * self.sample_freq )):
+                    for attempt in range(0, 10):
+                        raw_data = self.serialConnection.readline().decode('utf-8')
+                        data = [float(s) for s in re.findall(r'-?\d+\.?\d*', raw_data)]
+                        if (len(data) != 6):
+                            print("data error, new try...")
+                            continue
+                        else:
+                            break
 
-                writer.writerow(data)
+                    writer.writerow(data)
 
     def close(self):
         self.serialConnection.close()

@@ -21,7 +21,7 @@ import seaborn as sns
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logging.root.setLevel(logging.NOTSET)
 
 def export_model_to_onnx(model):
@@ -172,6 +172,7 @@ def main(dataset_path, num_epochs=10, batch_size=16, learning_rate=0.00001, debu
     logging.getLogger('modules.train').setLevel(logging.INFO)
     logging.getLogger('modules.utils').setLevel(logging.INFO)
     logging.getLogger('matplotlib').setLevel(logging.WARNING)
+    logging.getLogger('PIL').setLevel(logging.WARNING)
 
 
     labels_map = get_labels_map()

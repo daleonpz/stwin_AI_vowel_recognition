@@ -4,7 +4,7 @@
   ******************************************************************************
   * @file    model.h
   * @author  AST Embedded Analytics Research Platform
-  * @date    Sun Jan 22 17:28:34 2023
+  * @date    Sun Feb 12 16:50:51 2023
   * @brief   AI Tool Automatic Code Generator for Embedded NN computing
   ******************************************************************************
   * @attention

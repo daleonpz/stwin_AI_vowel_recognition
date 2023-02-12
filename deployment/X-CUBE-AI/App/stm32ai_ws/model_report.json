@@ -12,12 +12,12 @@
         "factor": null,
         "layers": {}
     },
-    "date_time": "Sun Jan 22 17:28:34 2023",
+    "date_time": "Sun Feb 12 16:50:51 2023",
     "error": 0,
     "error_str": [],
     "exec_cmd": "generate",
     "exec_duration": 0.0,
-    "hash": "6b2dc5ccc40d92918b5afaa47f339fa1",
+    "hash": "97ec228e285f1ec224edb27498a05d3b",
     "inputs": [
         "input"
     ],
@@ -93,7 +93,7 @@
             "inputs": [
                 "input"
             ],
-            "name": "node_29",
+            "name": "_conv1_Conv_output_0",
             "type": "Conv2D"
         },
         {
@@ -105,9 +105,9 @@
             },
             "id": 1,
             "inputs": [
-                "node_29"
+                "_conv1_Conv_output_0"
             ],
-            "name": "node_19",
+            "name": "_relu1_Relu_output_0",
             "type": "Nonlinearity"
         },
         {
@@ -119,9 +119,9 @@
             },
             "id": 2,
             "inputs": [
-                "node_19"
+                "_relu1_Relu_output_0"
             ],
-            "name": "node_20",
+            "name": "_pool1_MaxPool_output_0",
             "type": "Pool"
         },
         {
@@ -145,9 +145,9 @@
             },
             "id": 3,
             "inputs": [
-                "node_20"
+                "_pool1_MaxPool_output_0"
             ],
-            "name": "node_32",
+            "name": "_conv2_Conv_output_0",
             "type": "Conv2D"
         },
         {
@@ -159,9 +159,9 @@
             },
             "id": 4,
             "inputs": [
-                "node_32"
+                "_conv2_Conv_output_0"
             ],
-            "name": "node_23",
+            "name": "_relu2_Relu_output_0",
             "type": "Nonlinearity"
         },
         {
@@ -173,9 +173,9 @@
             },
             "id": 5,
             "inputs": [
-                "node_23"
+                "_relu2_Relu_output_0"
             ],
-            "name": "node_24",
+            "name": "_pool2_MaxPool_output_0",
             "type": "Pool"
         },
         {
@@ -199,9 +199,9 @@
             },
             "id": 6,
             "inputs": [
-                "node_24"
+                "_pool2_MaxPool_output_0"
             ],
-            "name": "node_25",
+            "name": "_avgpool_GlobalAveragePool_output_0",
             "type": "Pool"
         },
         {
@@ -213,9 +213,9 @@
             },
             "id": 7,
             "inputs": [
-                "node_25"
+                "_avgpool_GlobalAveragePool_output_0"
             ],
-            "name": "node_26",
+            "name": "_Flatten_output_0",
             "type": "Reshape"
         },
         {
@@ -239,11 +239,11 @@
             },
             "id": 8,
             "inputs": [
-                "node_26",
+                "_Flatten_output_0",
                 "linear_weight",
                 "linear_bias"
             ],
-            "name": "node_27",
+            "name": "_linear_Gemm_output_0",
             "type": "Gemm"
         },
         {
@@ -267,7 +267,7 @@
             },
             "id": 9,
             "inputs": [
-                "node_27"
+                "_linear_Gemm_output_0"
             ],
             "name": "output",
             "type": "Nonlinearity"

@@ -1,2 +1,4 @@
 [core]
     autostage = true
+['remote "origin"']
+    url = https://dagshub.com/daleonpz/stwin_AI_vowel_recognition.dvc

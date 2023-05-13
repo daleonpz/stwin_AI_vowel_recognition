@@ -1,3 +1,11 @@
+# Clone repo
+
+```
+git clone git@github.com:daleonpz/stwin_AI_vowel_recognition.git
+dvc remote add origin https://dagshub.com/daleonpz/stwin_AI_vowel_recognition.dvc
+dvc pull -r origin
+```
+
 # Introduction
 The objective of this project was to train a neural network for **vowel recognition** based on **Inertial Movement Unit (IMU)** measurements and deploy it on the dev board [STEVAL-STWINKT1](https://www.st.com/en/evaluation-tools/steval-stwinkt1.html) from STM32.
 
